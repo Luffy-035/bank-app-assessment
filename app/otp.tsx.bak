@@ -1,0 +1,274 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export default function OTPScreen() {
+  const router = useRouter();
+  const [code, setCode] = useState(['2', '', '', '']);
+  const [timer, setTimer] = useState(20);
+  const [canResend, setCanResend] = useState(false);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
+
+  const handleCodeChange = (value: string, index: number) => {
+    if (value.length > 1) return;
+
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
+
+    // Auto-focus next input
+    if (value && index < 3) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleResend = () => {
+    if (canResend) {
+      setTimer(20);
+      setCanResend(false);
+      setCode(['', '', '', '']);
+      inputRefs.current[0]?.focus();
+    }
+  };
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#11181C" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>
+            Enter the <Text style={styles.titleHighlight}>code</Text>
+          </Text>
+          <Text style={styles.instruction}>
+            enter the 4 - digit code sent to +91 99*****930
+          </Text>
+        </View>
+
+        {/* Code Input Fields */}
+        <View style={styles.codeContainer}>
+          {code.map((digit, index) => (
+            <TextInput
+              key={index}
+              ref={(ref) => (inputRefs.current[index] = ref)}
+              style={[
+                styles.codeInput,
+                digit && styles.codeInputFilled,
+              ]}
+              value={digit}
+              onChangeText={(value) => handleCodeChange(value, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
+              keyboardType="number-pad"
+              maxLength={1}
+              selectTextOnFocus
+            />
+          ))}
+        </View>
+
+        {/* Verify Button */}
+        <TouchableOpacity
+          style={styles.verifyButton}
+          onPress={() => router.push('/role-selection')}
+        >
+          <Text style={styles.verifyButtonText}>Verify</Text>
+        </TouchableOpacity>
+
+        {/* Resend OTP */}
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>Didn't receive the OTP?</Text>
+          <View style={styles.resendActionContainer}>
+            <TouchableOpacity
+              onPress={handleResend}
+              disabled={!canResend}
+              style={styles.resendButton}
+            >
+              <Text style={[styles.resendLink, !canResend && styles.resendLinkDisabled]}>
+                Resend
+              </Text>
+            </TouchableOpacity>
+            {!canResend && (
+              <>
+                <Text style={styles.resendHyphen}>-</Text>
+                <View style={styles.timerContainer}>
+                  <Text style={styles.timerText}>{formatTimer(timer)}</Text>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+  },
+  titleContainer: {
+    marginBottom: 36,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: FontFamily.inter,
+    fontWeight: '400',
+    color: '#1E3A8A',
+    marginBottom: 10,
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  titleHighlight: {
+    fontFamily: FontFamily.interBold,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  instruction: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#9BA1A6',
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  codeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+    marginBottom: 28,
+  },
+  codeInput: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    textAlign: 'center',
+    fontSize: 22,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    color: '#11181C',
+  },
+  codeInputFilled: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#1E3A8A',
+    borderWidth: 2,
+  },
+  verifyButton: {
+    backgroundColor: '#1E3A8A',
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+    minHeight: 52,
+  },
+  verifyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  resendContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resendText: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#9BA1A6',
+    marginBottom: 8,
+  },
+  resendActionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  resendButton: {
+    padding: 0,
+  },
+  resendLink: {
+    fontSize: 13,
+    fontFamily: FontFamily.latoBold,
+    color: '#1E3A8A',
+    fontWeight: '700',
+  },
+  resendLinkDisabled: {
+    color: '#9BA1A6',
+  },
+  resendHyphen: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#9BA1A6',
+    marginHorizontal: 2,
+  },
+  timerContainer: {
+    backgroundColor: '#F3E8FF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  timerText: {
+    fontSize: 12,
+    fontFamily: FontFamily.lato,
+    color: '#9BA1A6',
+    fontWeight: '400',
+  },
+});
+

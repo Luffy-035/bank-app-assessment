@@ -1,0 +1,651 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React from 'react';
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const { width } = Dimensions.get('window');
+
+export default function LandlordDashboardScreen() {
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.avatar} />
+            <View>
+              <Text style={styles.welcomeText}>Welcome back,</Text>
+              <Text style={styles.userName}>Alex Thompson</Text>
+            </View>
+          </View>
+          <TouchableOpacity>
+            <Ionicons name="notifications-outline" size={22} color="#111827" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Overview */}
+        <Text style={styles.sectionTitle}>Overview</Text>
+
+        <View style={styles.overviewCard}>
+          {/* Bubble pattern overlay */}
+          <View style={styles.bubblePattern}>
+            <View style={[styles.bubble, styles.bubble1]} />
+            <View style={[styles.bubble, styles.bubble2]} />
+            <View style={[styles.bubble, styles.bubble3]} />
+          </View>
+          <View style={styles.overviewContent}>
+            <View style={styles.overviewRow}>
+              <View>
+                <Text style={styles.overviewLabel}>Total Properties</Text>
+                <Text style={styles.overviewSub}>Managed: 12</Text>
+              </View>
+              <Text style={styles.overviewBig}>20</Text>
+            </View>
+            <View style={styles.overviewRow2}>
+              <Text style={styles.overviewRatio}>10/20</Text>
+              <Text style={styles.occupancyText}>Occupancy</Text>
+            </View>
+            <View style={styles.progressBg}>
+              <View style={styles.progressFill} />
+            </View>
+          </View>
+        </View>
+
+        {/* Property Count Badge */}
+        <View style={styles.badgeRow}>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>311</Text>
+            <Ionicons name="business" size={14} color="#1601AA" />
+            <Text style={styles.countText}>171</Text>
+          </View>
+        </View>
+
+        {/* Stats Grid */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <View style={styles.statIconWrap}>
+              <Ionicons name="cash" size={20} color="#1601AA" />
+            </View>
+            <Text style={styles.statValue}>85%</Text>
+            <Text style={styles.statLabel}>Rent & Income</Text>
+          </View>
+          <View style={styles.statCard}>
+            <View style={styles.statIconWrap}>
+              <Ionicons name="apps" size={20} color="#1601AA" />
+            </View>
+            <Text style={styles.statValue}>85%</Text>
+            <Text style={styles.statLabel}>Tenant Hub</Text>
+          </View>
+          <View style={styles.statCard}>
+            <View style={styles.statIconWrap}>
+              <Ionicons name="document-text" size={20} color="#1601AA" />
+            </View>
+            <Text style={styles.statValue}>92</Text>
+            <Text style={styles.statLabel}>Documents</Text>
+          </View>
+          <View style={styles.statCard}>
+            <View style={[styles.statIconWrap, { backgroundColor: '#EDE9FE' }]}>
+              <Ionicons name="construct" size={20} color="#7C3AED" />
+            </View>
+            <Text style={styles.statValue}>05</Text>
+            <Text style={styles.statLabel}>Maintenance{'\n'}Request</Text>
+          </View>
+        </View>
+
+        {/* Tenant Requests */}
+        <TouchableOpacity style={styles.tenantCard}>
+          <View style={styles.tenantLeft}>
+            <View style={styles.tenantIcon}>
+              <Ionicons name="person-add-outline" size={18} color="#FFFFFF" />
+            </View>
+            <View>
+              <Text style={styles.tenantLabel}>Tenant Requests</Text>
+              <Text style={styles.tenantCount}>03</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Action Required */}
+        <Text style={styles.sectionTitle}>Action Required</Text>
+
+        <TouchableOpacity style={styles.actionCard}>
+          <View style={[styles.actionIconWrap, { backgroundColor: '#FEE2E2' }]}>
+            <Ionicons name="alert-circle" size={16} color="#DC2626" />
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Unit 5B: Rent Overdue</Text>
+            <Text style={styles.actionSub}>John Smith is 5 days late.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionCard}>
+          <View style={[styles.actionIconWrap, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="time-outline" size={16} color="#D97706" />
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Lease Ending Soon</Text>
+            <Text style={styles.actionSub}>Unit 12A lease expires in 30 days.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+        </TouchableOpacity>
+
+        {/* Collection */}
+        <View style={styles.collectionBox}>
+          <Text style={styles.collectionTitle}>Collection</Text>
+          <View style={styles.collectionBar}>
+            <View style={styles.barGreen} />
+            <View style={styles.barRed} />
+          </View>
+          <View style={styles.collectionRow}>
+            <View style={styles.dotWrap}><View style={[styles.dot, { backgroundColor: '#22C55E' }]} /></View>
+            <Text style={styles.collectionLabel}>Received</Text>
+            <Text style={[styles.collectionVal, { color: '#22C55E' }]}>$18,000</Text>
+          </View>
+          <View style={styles.collectionRow}>
+            <View style={styles.dotWrap}><View style={[styles.dot, { backgroundColor: '#EF4444' }]} /></View>
+            <Text style={styles.collectionLabel}>Pending</Text>
+            <Text style={[styles.collectionVal, { color: '#EF4444' }]}>$2,000</Text>
+          </View>
+          <View style={styles.collectionRow}>
+            <View style={styles.dotWrap} />
+            <Text style={styles.collectionLabel}>Total</Text>
+            <Text style={styles.collectionVal}>$20,000</Text>
+          </View>
+        </View>
+
+        {/* Properties Overview */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle2}>Properties Overview</Text>
+          <TouchableOpacity><Text style={styles.viewAll}>View All</Text></TouchableOpacity>
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.propScrollContent}>
+          <View style={styles.propCard}>
+            <View style={styles.propImg} />
+            <View style={styles.propBadge}>
+              <Text style={styles.propBadgeText}>Occupied</Text>
+            </View>
+            <Text style={styles.propName}>Sunset Apartments</Text>
+            <Text style={styles.propAddr}>123 Ocean Drive, Miami</Text>
+          </View>
+          <View style={[styles.propCard, styles.propCardVacant]}>
+            <View style={[styles.propImg, { backgroundColor: '#E8E6FA' }]} />
+            <View style={[styles.propBadge, { backgroundColor: '#FEF3C7' }]}>
+              <Text style={[styles.propBadgeText, { color: '#D97706' }]}>Vacant</Text>
+            </View>
+            <Text style={styles.propName}>The Grand</Text>
+            <Text style={styles.propAddr}>456 Park Ave</Text>
+          </View>
+        </ScrollView>
+
+        {/* Income Overview */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle2}>Income Overview</Text>
+          <TouchableOpacity onPress={() => router.push('/rent-income')}><Text style={styles.viewAll}>Full Report</Text></TouchableOpacity>
+        </View>
+
+        <View style={styles.incomeCard}>
+          <Text style={styles.incomeLabel}>October Total Income</Text>
+          <Text style={styles.incomeAmount}>$22,870</Text>
+        </View>
+
+        {/* Rental Summary */}
+        <View style={styles.rentalCard}>
+          <Text style={styles.rentalTitle}>Rental Summary</Text>
+
+          {/* Dotted Arc Chart */}
+          <View style={styles.chartWrap}>
+            <View style={styles.dotsContainer}>
+              {[...Array(13)].map((_, i) => {
+                const angle = Math.PI + (i / 12) * Math.PI;
+                const x = 60 + 50 * Math.cos(angle);
+                const y = 60 + 50 * Math.sin(angle);
+                return (
+                  <View
+                    key={i}
+                    style={[
+                      styles.chartDot,
+                      {
+                        left: x - 6,
+                        top: y - 6,
+                        backgroundColor: i < 9 ? '#6B8CFF' : '#3B5BDB',
+                      },
+                    ]}
+                  />
+                );
+              })}
+            </View>
+            <View style={styles.chartIconWrap}>
+              <Ionicons name="diamond-outline" size={22} color="#FFFFFF" />
+            </View>
+          </View>
+          <Text style={styles.chartLabel}>Summary</Text>
+          <Text style={styles.chartValue}>22,870</Text>
+
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryCol}>
+              <View style={styles.summaryColHeader}>
+                <Ionicons name="calendar-outline" size={12} color="rgba(255,255,255,0.6)" />
+                <Text style={styles.summaryColLabel}>Monthly</Text>
+              </View>
+              <Text style={styles.summaryColVal}>$8,097</Text>
+              <Text style={styles.summaryColSub}>↑ 19.6%  44,714 USD</Text>
+            </View>
+            <View style={styles.summaryCol}>
+              <View style={styles.summaryColHeader}>
+                <Ionicons name="calendar-outline" size={12} color="rgba(255,255,255,0.6)" />
+                <Text style={styles.summaryColLabel}>Yearly</Text>
+              </View>
+              <Text style={styles.summaryColVal}>$312,134</Text>
+              <Text style={styles.summaryColSub}>↑ 2.6%  301,002 USD</Text>
+            </View>
+          </View>
+
+          <View style={styles.locList}>
+            <View style={styles.locRow}>
+              <Text style={styles.locName}>Los Angeles</Text>
+              <Text style={styles.locVal}>201,192</Text>
+            </View>
+            <View style={styles.locRow}>
+              <Text style={styles.locName}>New York</Text>
+              <Text style={styles.locVal}>192,054</Text>
+            </View>
+            <View style={styles.locRow}>
+              <Text style={styles.locName}>Canada</Text>
+              <Text style={styles.locVal}>166,401</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} onPress={() => router.push('/add-property')}>
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="grid" size={20} color="#1601AA" />
+          <Text style={[styles.tabText, styles.tabActive]}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/properties')}>
+          <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>Properties</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="construct-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>Requests</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>More</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 50,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#1601AA',
+    backgroundColor: '#FFFFFF',
+  },
+  welcomeText: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280' },
+  userName: { fontSize: 15, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827' },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: FontFamily.interBold,
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 16,
+    marginBottom: 12,
+    marginTop: 14,
+  },
+  overviewCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#1601AA',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 10,
+    position: 'relative',
+  },
+  bubblePattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  bubble: {
+    position: 'absolute',
+    borderRadius: 1000,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  bubble1: {
+    width: 120,
+    height: 120,
+    top: -30,
+    left: -30,
+  },
+  bubble2: {
+    width: 80,
+    height: 80,
+    top: 40,
+    left: 50,
+  },
+  bubble3: {
+    width: 60,
+    height: 60,
+    top: -10,
+    left: 100,
+  },
+  overviewContent: {
+    padding: 18,
+  },
+  overviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  overviewLabel: { fontSize: 16, fontFamily: FontFamily.lato, color: '#FFFFFF', fontWeight: '500' },
+  overviewSub: { fontSize: 13, fontFamily: FontFamily.lato, color: '#FFFFFF', opacity: 0.7, marginTop: 4 },
+  overviewBig: { fontSize: 48, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+  overviewRow2: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 20,
+  },
+  overviewRatio: { fontSize: 36, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+  occupancyText: { fontSize: 13, fontFamily: FontFamily.lato, color: '#FFFFFF', opacity: 0.8 },
+  progressBg: {
+    height: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 5,
+    marginTop: 14,
+  },
+  progressFill: {
+    width: '60%',
+    height: 10,
+    backgroundColor: '#60A5FA',
+    borderRadius: 5,
+  },
+  badgeRow: {
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  countBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8E6FA',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  countText: {
+    fontSize: 13,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    color: '#1601AA',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 12,
+    marginBottom: 18,
+  },
+  statCard: {
+    width: (width - 40) / 2,
+    backgroundColor: '#EDE9FE',
+    borderRadius: 14,
+    padding: 16,
+    margin: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  statIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValue: {
+    flex: 1,
+    fontSize: 24,
+    fontFamily: FontFamily.interBold,
+    fontWeight: '700',
+    color: '#1601AA',
+    textAlign: 'right',
+  },
+  statLabel: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#111827',
+    fontWeight: '500',
+    width: '100%',
+    marginTop: 12,
+  },
+  tenantCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#1601AA',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  tenantLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  tenantIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tenantLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#FFFFFF', opacity: 0.8 },
+  tenantCount: { fontSize: 18, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+  actionCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  actionIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  actionContent: { flex: 1 },
+  actionTitle: { fontSize: 13, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#111827' },
+  actionSub: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 2 },
+  collectionBox: { marginHorizontal: 16, marginTop: 18, marginBottom: 18 },
+  collectionTitle: { fontSize: 13, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#111827', marginBottom: 8 },
+  collectionBar: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  barGreen: { width: '90%', backgroundColor: '#22C55E' },
+  barRed: { width: '10%', backgroundColor: '#EF4444' },
+  collectionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  dotWrap: { width: 18 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  collectionLabel: { flex: 1, fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280' },
+  collectionVal: { fontSize: 12, fontFamily: FontFamily.latoSemiBold, fontWeight: '600', color: '#111827' },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  sectionTitle2: { fontSize: 15, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827' },
+  viewAll: { fontSize: 12, fontFamily: FontFamily.latoSemiBold, color: '#1601AA', fontWeight: '500' },
+  propScrollContent: { paddingLeft: 16, paddingRight: 16 },
+  propCard: {
+    width: 180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    marginRight: 12,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  propCardVacant: {
+    backgroundColor: '#EDE9FE',
+    borderColor: '#E8E6FA',
+  },
+  propImg: {
+    height: 100,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  propBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#D1FAE5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  propBadgeText: { fontSize: 11, fontFamily: FontFamily.latoSemiBold, fontWeight: '600', color: '#22C55E' },
+  propName: { fontSize: 14, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827' },
+  propAddr: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 3 },
+  incomeCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#1601AA',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 18,
+    marginTop: 2,
+  },
+  incomeLabel: { fontSize: 13, fontFamily: FontFamily.lato, color: '#FFFFFF', opacity: 0.85 },
+  incomeAmount: { fontSize: 32, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF', marginTop: 4 },
+  rentalCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#1601AA',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 3,
+    borderColor: '#C7D2FE',
+  },
+  rentalTitle: { fontSize: 18, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF', marginBottom: 20, textAlign: 'center' },
+  chartWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+    marginBottom: 4,
+  },
+  dotsContainer: {
+    width: 120,
+    height: 120,
+    position: 'relative',
+  },
+  chartDot: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  chartIconWrap: {
+    position: 'absolute',
+    top: 45,
+    left: '50%',
+    marginLeft: -18,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#0D1B4D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chartLabel: { fontSize: 12, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 4 },
+  chartValue: { fontSize: 36, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF', textAlign: 'center', marginBottom: 20 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, paddingHorizontal: 10 },
+  summaryCol: { alignItems: 'flex-start' },
+  summaryColHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  summaryColLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.6)' },
+  summaryColVal: { fontSize: 22, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+  summaryColSub: { fontSize: 10, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  locList: {
+    paddingTop: 4,
+  },
+  locRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  locName: { fontSize: 15, fontFamily: FontFamily.lato, color: '#FFFFFF' },
+  locVal: { fontSize: 15, fontFamily: FontFamily.latoSemiBold, fontWeight: '600', color: '#FFFFFF' },
+  fab: {
+    position: 'absolute',
+    bottom: 88,
+    alignSelf: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1601AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1601AA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingBottom: 22,
+    paddingTop: 8,
+  },
+  tabItem: { flex: 1, alignItems: 'center' },
+  tabText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
+  tabActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold, fontWeight: '500' },
+});

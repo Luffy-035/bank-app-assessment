@@ -1,0 +1,783 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
+
+const { width } = Dimensions.get('window');
+
+const tabs = ['All', 'By Property', 'By Tenant', 'By Month'];
+
+const properties = [
+  {
+    name: 'Oakwood Apartments',
+    badge: 'Top Performer',
+    badgeColor: '#1601AA',
+    units: '24 units • 95% occupied',
+    income: '$18,400',
+    arpu: '$808',
+    collection: '98%',
+    collectionColor: '#22C55E',
+    due: '$300',
+    overdue: '$0',
+    overdueColor: '#6B7280',
+  },
+  {
+    name: 'Riverside Complex',
+    badge: null,
+    units: '18 units • 88% occupied',
+    income: '$13,250',
+    arpu: '$835',
+    collection: '92%',
+    collectionColor: '#22C55E',
+    due: '$1,050',
+    overdue: '$250',
+    overdueColor: '#EF4444',
+  },
+  {
+    name: 'Sunset Towers',
+    badge: 'Below Target',
+    badgeColor: '#EF4444',
+    units: '12 units • 75% occupied',
+    income: '$8,100',
+    arpu: '$900',
+    collection: '85%',
+    collectionColor: '#F59E0B',
+    due: '$1,200',
+    overdue: '$450',
+    overdueColor: '#EF4444',
+  },
+  {
+    name: 'Maple Grove',
+    badge: null,
+    units: '15 units • 93% occupied',
+    income: '$9,000',
+    arpu: '$643',
+    collection: '96%',
+    collectionColor: '#22C55E',
+    due: '$300',
+    overdue: '$100',
+    overdueColor: '#EF4444',
+  },
+];
+
+const tenants = [
+  {
+    name: 'Sarah Johnson',
+    address: 'Oakwood Apt - Unit 204',
+    status: 'Received',
+    statusColor: '#22C55E',
+    statusBg: '#DCFCE7',
+    leftLabel: 'Amount',
+    leftValue: '$850',
+    rightLabel: 'Paid On',
+    rightValue: 'Dec 1, 2024',
+    highlight: false,
+  },
+  {
+    name: 'Michael Chen',
+    address: 'Riverside - Unit 305',
+    status: 'Partially Paid',
+    statusColor: '#F59E0B',
+    statusBg: '#FEF3C7',
+    leftLabel: 'Paid / Total',
+    leftValue: '$500 / $900',
+    rightLabel: 'Due',
+    rightValue: '$400',
+    highlight: false,
+  },
+  {
+    name: 'David Martinez',
+    address: 'Sunset - Unit 102',
+    status: 'Due',
+    statusColor: '#1601AA',
+    statusBg: '#DBEAFE',
+    leftLabel: 'Amount',
+    leftValue: '$750',
+    rightLabel: 'Due Date',
+    rightValue: 'Dec 5, 2024',
+    highlight: false,
+  },
+  {
+    name: 'Lisa Anderson',
+    address: 'Riverside - Unit 201',
+    status: 'Overdue 45 Days',
+    statusColor: '#EF4444',
+    statusBg: '#FEE2E2',
+    leftLabel: 'Amount',
+    leftValue: '$250',
+    rightLabel: 'Due Date',
+    rightValue: 'Oct 25, 2024',
+    highlight: true,
+  },
+  {
+    name: 'Emma Thompson',
+    address: 'Maple Grove - Unit 503',
+    status: 'Received',
+    statusColor: '#22C55E',
+    statusBg: '#DCFCE7',
+    leftLabel: 'Amount',
+    leftValue: '$680',
+    rightLabel: 'Paid On',
+    rightValue: 'Dec 2, 2024',
+    highlight: false,
+  },
+];
+
+const chartData = [
+  { month: 'Jan', value: 25 },
+  { month: 'Feb', value: 20 },
+  { month: 'Mar', value: 35 },
+  { month: 'Apr', value: 28 },
+  { month: 'May', value: 40 },
+  { month: 'Jun', value: 32 },
+  { month: 'Jul', value: 38 },
+];
+
+export default function RentIncomeScreen() {
+  const [activeTab, setActiveTab] = useState('All');
+
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Rent & Income</Text>
+          <TouchableOpacity>
+            <Ionicons name="ellipsis-vertical" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Summary Section */}
+        <View style={styles.summarySection}>
+          <Text style={styles.summaryDate}>December 2024</Text>
+          <View style={styles.summaryAmountRow}>
+            <Text style={styles.summaryAmount}>$48,750</Text>
+            <View style={styles.percentBadge}>
+              <Ionicons name="arrow-up" size={10} color="#22C55E" />
+              <Text style={styles.percentText}>12.5%</Text>
+            </View>
+          </View>
+          <Text style={styles.summarySubtext}>vs last month</Text>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Received</Text>
+              <Text style={styles.statValue}>$52,400</Text>
+            </View>
+            <View style={[styles.statBox, styles.statBoxMiddle]}>
+              <Text style={styles.statLabel}>Due</Text>
+              <Text style={styles.statValue}>$48,750</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>Overdue</Text>
+              <Text style={styles.statValue}>$2,850</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.tabActive]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Quick Monthly Snapshot */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Quick monthly snapshot:</Text>
+          <TouchableOpacity onPress={() => router.push('/occupancy')}>
+            <Text style={styles.detailsLink}>Details</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.snapshotGrid}>
+          <View style={styles.snapshotItem}>
+            <View style={styles.snapshotIconWrap}>
+              <Ionicons name="cash-outline" size={18} color="#1601AA" />
+            </View>
+            <View style={styles.snapshotContent}>
+              <Text style={styles.snapshotValue}>+12.5%</Text>
+              <Text style={styles.snapshotLabel}>Income Comparison</Text>
+            </View>
+          </View>
+          <View style={styles.snapshotItem}>
+            <View style={styles.snapshotIconWrap}>
+              <Ionicons name="construct-outline" size={18} color="#1601AA" />
+            </View>
+            <View style={styles.snapshotContent}>
+              <Text style={styles.snapshotValue}>$4,200</Text>
+              <Text style={styles.snapshotLabel}>Maintenance Expense</Text>
+            </View>
+          </View>
+          <View style={styles.snapshotItem}>
+            <View style={styles.snapshotIconWrap}>
+              <Ionicons name="bar-chart-outline" size={18} color="#1601AA" />
+            </View>
+            <View style={styles.snapshotContent}>
+              <Text style={styles.snapshotValue}>91%</Text>
+              <Text style={styles.snapshotLabel}>Occupancy Rate</Text>
+            </View>
+          </View>
+          <View style={styles.snapshotItem}>
+            <View style={styles.snapshotIconWrap}>
+              <Ionicons name="people-outline" size={18} color="#1601AA" />
+            </View>
+            <View style={styles.snapshotContent}>
+              <Text style={styles.snapshotValue}>20 rooms</Text>
+              <Text style={styles.snapshotLabel}>Vacancy Forecast</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Monthly Income Trend - Area Line Chart */}
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Monthly Income Trend</Text>
+          <View style={styles.lineChartContainer}>
+            <View style={styles.yAxisLabels}>
+              <Text style={styles.yLabel}>40k</Text>
+              <Text style={styles.yLabel}>30k</Text>
+              <Text style={styles.yLabel}>20k</Text>
+              <Text style={styles.yLabel}>10k</Text>
+              <Text style={styles.yLabel}>0</Text>
+            </View>
+            <View style={styles.chartArea}>
+              <Svg width={230} height={140} viewBox="0 0 230 140">
+                {/* Horizontal grid lines */}
+                {[0, 35, 70, 105, 140].map((y, i) => (
+                  <Line key={`h${i}`} x1="0" y1={y} x2="230" y2={y} stroke="#E8E8E8" strokeWidth="1" strokeDasharray="3,3" />
+                ))}
+                {/* Vertical grid lines */}
+                {[0, 46, 92, 138, 184, 230].map((x, i) => (
+                  <Line key={`v${i}`} x1={x} y1="0" x2={x} y2="140" stroke="#E8E8E8" strokeWidth="1" strokeDasharray="3,3" />
+                ))}
+                {/* Area fill - smooth curve */}
+                <Path
+                  d="M 0 56 C 16 52, 28 48, 46 42 C 64 36, 75 28, 92 26 C 110 24, 120 22, 138 24 C 157 26, 165 35, 184 42 C 204 49, 214 75, 230 88 L 230 140 L 0 140 Z"
+                  fill="#DBEAFE"
+                />
+                {/* Line curve */}
+                <Path
+                  d="M 0 56 C 16 52, 28 48, 46 42 C 64 36, 75 28, 92 26 C 110 24, 120 22, 138 24 C 157 26, 165 35, 184 42 C 204 49, 214 75, 230 88"
+                  stroke="#6366F1"
+                  strokeWidth="2.5"
+                  fill="none"
+                />
+                {/* Data points */}
+                <Circle cx="0" cy="56" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+                <Circle cx="46" cy="42" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+                <Circle cx="92" cy="26" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+                <Circle cx="138" cy="24" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+                <Circle cx="184" cy="42" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+                <Circle cx="230" cy="88" r="4" fill="#FFFFFF" stroke="#6366F1" strokeWidth="2" />
+              </Svg>
+              <View style={styles.xAxisLabels}>
+                <Text style={styles.xLabel}>Jan</Text>
+                <Text style={styles.xLabel}>Feb</Text>
+                <Text style={styles.xLabel}>Mar</Text>
+                <Text style={styles.xLabel}>Apr</Text>
+                <Text style={styles.xLabel}>May</Text>
+                <Text style={styles.xLabel}>Jun</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Payment Methods - Pie Chart */}
+        <View style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Payment Methods</Text>
+          <View style={styles.pieChartContainer}>
+            <View style={styles.pieWrapper}>
+              <Svg width={180} height={180} viewBox="0 0 180 180">
+                {/* Bank Transfer 50.3% - Light purple - starts at top, goes clockwise ~181° */}
+                <Path
+                  d="M 90 90 L 90 5 A 85 85 0 1 1 7 110 Z"
+                  fill="#A5B4FC"
+                />
+                {/* UPI 31% - Dark navy blue - ~112° */}
+                <Path
+                  d="M 90 90 L 7 110 A 85 85 0 0 1 35 25 Z"
+                  fill="#1E3A8A"
+                />
+                {/* Cash 13% - Medium blue - ~47° */}
+                <Path
+                  d="M 90 90 L 35 25 A 85 85 0 0 1 75 6 Z"
+                  fill="#4338CA"
+                />
+                {/* Others 4.5% - Very light - ~16° */}
+                <Path
+                  d="M 90 90 L 75 6 A 85 85 0 0 1 90 5 Z"
+                  fill="#C7D2FE"
+                />
+              </Svg>
+
+              {/* Labels with lines */}
+              <View style={styles.upiLabel}>
+                <View style={styles.upiLine} />
+                <Text style={styles.pieLabelName}>UPI</Text>
+                <Text style={styles.pieLabelPercent}>31%</Text>
+              </View>
+
+              <View style={styles.cashLabel}>
+                <View style={styles.cashLine} />
+                <Text style={styles.pieLabelName}>Cash</Text>
+                <Text style={styles.pieLabelPercent}>13%</Text>
+              </View>
+
+              <View style={styles.othersLabel}>
+                <View style={styles.othersLine} />
+                <Text style={styles.pieLabelName}>Others</Text>
+                <Text style={styles.pieLabelPercent}>4.5%</Text>
+              </View>
+
+              <View style={styles.bankLabel}>
+                <View style={styles.bankLabelLine} />
+                <Text style={[styles.pieLabelName, { color: '#1601AA' }]}>Bank Transfer</Text>
+                <Text style={[styles.pieLabelPercent, { color: '#1601AA' }]}>50.3%</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Property Performance */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Property Performance</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllLink}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {properties.map((property, index) => (
+          <View key={index} style={styles.propertyCard}>
+            <View style={styles.propertyHeader}>
+              <View style={styles.propertyNameRow}>
+                <Text style={styles.propertyName}>{property.name}</Text>
+                {property.badge && (
+                  <View style={[styles.propertyBadge, { backgroundColor: property.badgeColor + '15' }]}>
+                    <Text style={[styles.propertyBadgeText, { color: property.badgeColor }]}>
+                      {property.badge}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </View>
+            <Text style={styles.propertyUnits}>{property.units}</Text>
+
+            <View style={styles.propertyStats}>
+              <View style={styles.propertyStat}>
+                <Text style={styles.propertyStatLabel}>Income</Text>
+                <Text style={styles.propertyStatValue}>{property.income}</Text>
+              </View>
+              <View style={styles.propertyStat}>
+                <Text style={styles.propertyStatLabel}>ARPU</Text>
+                <Text style={styles.propertyStatValue}>{property.arpu}</Text>
+              </View>
+              <View style={styles.propertyStat}>
+                <Text style={styles.propertyStatLabel}>Collection</Text>
+                <Text style={[styles.propertyStatValue, { color: property.collectionColor }]}>
+                  {property.collection}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.propertyDueRow}>
+              <Text style={styles.propertyDueText}>Due: {property.due}</Text>
+              <Text style={[styles.propertyOverdueText, { color: property.overdueColor }]}>
+                Overdue: {property.overdue}
+              </Text>
+            </View>
+          </View>
+        ))}
+
+        {/* Tenant Payment Status */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Tenant Payment Status</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllLink}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {tenants.map((tenant, index) => (
+          <View
+            key={index}
+            style={[
+              styles.tenantCard,
+              tenant.highlight && styles.tenantCardHighlight,
+            ]}
+          >
+            <View style={styles.tenantHeader}>
+              <Text style={styles.tenantName}>{tenant.name}</Text>
+              <View style={[styles.tenantStatusBadge, { backgroundColor: tenant.statusBg }]}>
+                <Text style={[styles.tenantStatusText, { color: tenant.statusColor }]}>
+                  {tenant.status}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.tenantAddress}>{tenant.address}</Text>
+
+            <View style={styles.tenantDetails}>
+              <View>
+                <Text style={styles.tenantDetailLabel}>{tenant.leftLabel}</Text>
+                <Text style={styles.tenantDetailValue}>{tenant.leftValue}</Text>
+              </View>
+              <View>
+                <Text style={styles.tenantDetailLabel}>{tenant.rightLabel}</Text>
+                <Text style={styles.tenantDetailValue}>{tenant.rightValue}</Text>
+              </View>
+            </View>
+          </View>
+        ))}
+
+        {/* Action Buttons */}
+        <TouchableOpacity style={styles.primaryBtn}>
+          <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.primaryBtnText}>Send Payment Reminders</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.secondaryBtn}>
+          <Ionicons name="download-outline" size={18} color="#1601AA" />
+          <Text style={styles.secondaryBtnText}>Export Statement</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} onPress={() => router.push('/add-property')}>
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabBarItem}>
+          <Ionicons name="grid" size={20} color="#1601AA" />
+          <Text style={[styles.tabBarText, styles.tabBarActive]}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarItem} onPress={() => router.push('/properties')}>
+          <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabBarText}>Properties</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarItem}>
+          <Ionicons name="construct-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabBarText}>Requests</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabBarItem}>
+          <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+          <Text style={styles.tabBarText}>More</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1601AA',
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backBtn: { padding: 4 },
+  headerTitle: { fontSize: 18, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#FFFFFF' },
+
+  // Summary
+  summarySection: {
+    backgroundColor: '#1601AA',
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  summaryDate: { fontSize: 13, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.7)', marginBottom: 4 },
+  summaryAmountRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  summaryAmount: { fontSize: 42, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+  percentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3730A3',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginLeft: 14,
+  },
+  percentText: { fontSize: 13, fontFamily: FontFamily.latoSemiBold, fontWeight: '600', color: '#22C55E', marginLeft: 3 },
+  summarySubtext: { fontSize: 12, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.6)', marginTop: 4, marginBottom: 4 },
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 14,
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  statBox: { flex: 1, paddingVertical: 14, alignItems: 'flex-start', paddingHorizontal: 14 },
+  statBoxMiddle: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  statLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: 'rgba(255,255,255,0.7)', marginBottom: 6 },
+  statValue: { fontSize: 18, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#FFFFFF' },
+
+  // Scroll
+  scroll: { flex: 1 },
+
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 8,
+  },
+  tab: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  tabActive: { backgroundColor: '#1601AA', borderColor: '#1601AA' },
+  tabText: { fontSize: 13, fontFamily: FontFamily.latoSemiBold, color: '#6B7280', fontWeight: '500' },
+  tabTextActive: { color: '#FFFFFF' },
+
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  sectionTitle: { fontSize: 15, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#111827' },
+  detailsLink: { fontSize: 13, fontFamily: FontFamily.latoSemiBold, color: '#1601AA', fontWeight: '500' },
+  viewAllLink: { fontSize: 13, fontFamily: FontFamily.latoSemiBold, color: '#1601AA', fontWeight: '500' },
+
+  // Snapshot Grid
+  snapshotGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  snapshotItem: {
+    width: (width - 40) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  snapshotIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  snapshotContent: { flex: 1 },
+  snapshotValue: { fontSize: 16, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827' },
+  snapshotLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 3 },
+
+  // Chart Card
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  chartTitle: { fontSize: 16, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827', marginBottom: 20 },
+
+  // Line Chart
+  lineChartContainer: { flexDirection: 'row', alignItems: 'flex-end' },
+  yAxisLabels: { width: 32, justifyContent: 'space-between', height: 140, marginRight: 6 },
+  yLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#9CA3AF', textAlign: 'right' },
+  chartArea: { width: 230, overflow: 'hidden', alignSelf: 'center' },
+  xAxisLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    marginLeft: -10,
+  },
+  xLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280' },
+
+  // Pie Chart
+  pieChartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  pieWrapper: {
+    width: 280,
+    height: 240,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  upiLabel: {
+    position: 'absolute',
+    left: 0,
+    top: 16,
+    alignItems: 'flex-start',
+  },
+  cashLabel: {
+    position: 'absolute',
+    left: 0,
+    bottom: 88,
+    alignItems: 'flex-start',
+  },
+  othersLabel: {
+    position: 'absolute',
+    left: 20,
+    bottom: 32,
+    alignItems: 'flex-start',
+  },
+  bankLabel: {
+    position: 'absolute',
+    right: 0,
+    bottom: 52,
+    alignItems: 'flex-end',
+  },
+  bankLabelLine: { width: 40, height: 2, backgroundColor: '#1601AA', marginBottom: 4 },
+  upiLine: { width: 42, height: 2, backgroundColor: '#4338CA', marginBottom: 4 },
+  cashLine: { width: 42, height: 2, backgroundColor: '#4338CA', marginBottom: 4 },
+  othersLine: { width: 48, height: 2, backgroundColor: '#4338CA', marginBottom: 4 },
+  pieLabelName: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280' },
+  pieLabelPercent: { fontSize: 16, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#1601AA' },
+
+  // Property Card
+  propertyCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  propertyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  propertyNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  propertyName: { fontSize: 15, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#111827' },
+  propertyBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  propertyBadgeText: { fontSize: 10, fontFamily: FontFamily.latoSemiBold, fontWeight: '600' },
+  propertyUnits: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 4, marginBottom: 12 },
+  propertyStats: { flexDirection: 'row', gap: 24 },
+  propertyStat: {},
+  propertyStatLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280' },
+  propertyStatValue: { fontSize: 16, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827', marginTop: 2 },
+  propertyDueRow: { flexDirection: 'row', gap: 24, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
+  propertyDueText: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280' },
+  propertyOverdueText: { fontSize: 12, fontFamily: FontFamily.lato },
+
+  // Tenant Card
+  tenantCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  tenantCardHighlight: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
+  tenantHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  tenantName: { fontSize: 15, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#111827' },
+  tenantStatusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  tenantStatusText: { fontSize: 11, fontFamily: FontFamily.latoSemiBold, fontWeight: '600' },
+  tenantAddress: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 2, marginBottom: 12 },
+  tenantDetails: { flexDirection: 'row', justifyContent: 'space-between' },
+  tenantDetailLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280' },
+  tenantDetailValue: { fontSize: 15, fontFamily: FontFamily.latoSemiBold, fontWeight: '600', color: '#111827', marginTop: 2 },
+
+  // Buttons
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1601AA',
+    marginHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    gap: 8,
+  },
+  primaryBtnText: { fontSize: 15, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#FFFFFF' },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 8,
+  },
+  secondaryBtnText: { fontSize: 15, fontFamily: FontFamily.interSemiBold, fontWeight: '600', color: '#1601AA' },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    bottom: 88,
+    alignSelf: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1601AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1601AA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  // Tab Bar
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingBottom: 22,
+    paddingTop: 8,
+  },
+  tabBarItem: { flex: 1, alignItems: 'center' },
+  tabBarText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
+  tabBarActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold, fontWeight: '500' },
+});
+

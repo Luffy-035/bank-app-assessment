@@ -1,0 +1,167 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React from 'react';
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+export default function AccountSuccessScreen() {
+  const handleFinish = () => {
+    // Navigate to main app / dashboard, resetting the stack
+    router.replace('/(tabs)');
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Dimmed Background */}
+      <View style={styles.backdrop} />
+
+      {/* Bottom Sheet */}
+      <View style={styles.bottomSheet}>
+        {/* Drag Handle */}
+        <View style={styles.dragHandleContainer}>
+          <View style={styles.dragHandle} />
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Success Icon with Glow */}
+          <View style={styles.iconContainer}>
+            <View style={styles.iconGlow} />
+            <View style={styles.iconCircle}>
+              <Ionicons name="checkmark" size={40} color="#FFFFFF" />
+            </View>
+          </View>
+
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>
+              Account <Text style={styles.titleBold}>successfully</Text>
+            </Text>
+            <Text style={styles.titleSecondLine}>created</Text>
+          </View>
+
+          {/* Subtitle */}
+          <Text style={styles.subtitle}>you are all set to begin</Text>
+
+          {/* Finish Button */}
+          <TouchableOpacity style={styles.finishButton} onPress={handleFinish}>
+            <Text style={styles.finishButtonText}>Finish</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(75, 85, 99, 0.7)',
+  },
+  bottomSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    minHeight: SCREEN_HEIGHT * 0.5,
+  },
+  dragHandleContainer: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E5E5E5',
+    borderRadius: 2,
+  },
+  content: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+    marginTop: 20,
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(79, 70, 229, 0.15)',
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#4F46E5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: FontFamily.inter,
+    color: '#1F3A5F',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  titleBold: {
+    fontFamily: FontFamily.interBold,
+    color: '#1F3A5F',
+  },
+  titleSecondLine: {
+    fontSize: 28,
+    fontFamily: FontFamily.inter,
+    color: '#1F3A5F',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  finishButton: {
+    backgroundColor: '#1601AA',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    minHeight: 52,
+  },
+  finishButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: FontFamily.interSemiBold,
+    letterSpacing: 0.3,
+  },
+});
+

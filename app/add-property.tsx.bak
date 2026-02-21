@@ -1,0 +1,396 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const transactionTypes = ['Rent', 'Lease', 'Sale'];
+const propertyTypes = [
+  { id: 'apartment', label: 'Apartment', icon: 'business-outline' },
+  { id: 'house', label: 'House', icon: 'home-outline' },
+  { id: 'condo', label: 'Condo', icon: 'business-outline' },
+  { id: 'commercial', label: 'Commercial', icon: 'storefront-outline' },
+];
+
+export default function AddPropertyScreen() {
+  const [selectedTransaction, setSelectedTransaction] = useState('Rent');
+  const [selectedPropertyType, setSelectedPropertyType] = useState('apartment');
+  const [rentCycle, setRentCycle] = useState('Monthly');
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Add New Property</Text>
+        <View style={{ width: 30 }} />
+      </View>
+
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Transaction Type */}
+        <View style={styles.section}>
+          <View style={styles.segmentedControl}>
+            {transactionTypes.map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.segment,
+                  selectedTransaction === type && styles.segmentActive,
+                ]}
+                onPress={() => setSelectedTransaction(type)}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    selectedTransaction === type && styles.segmentTextActive,
+                  ]}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Property Name */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Property Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g., Sunset Apartments"
+            placeholderTextColor="#9CA3AF"
+          />
+        </View>
+
+        {/* Property Type */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Property Type</Text>
+          <View style={styles.propertyTypeGrid}>
+            {propertyTypes.map((type) => (
+              <TouchableOpacity
+                key={type.id}
+                style={[
+                  styles.propertyTypeBtn,
+                  selectedPropertyType === type.id && styles.propertyTypeBtnActive,
+                ]}
+                onPress={() => setSelectedPropertyType(type.id)}
+              >
+                <Ionicons
+                  name={type.icon as any}
+                  size={20}
+                  color={selectedPropertyType === type.id ? '#1601AA' : '#6B7280'}
+                />
+                <Text
+                  style={[
+                    styles.propertyTypeText,
+                    selectedPropertyType === type.id && styles.propertyTypeTextActive,
+                  ]}
+                >
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Address */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Address</Text>
+          <View style={styles.addressInputContainer}>
+            <Ionicons name="location-outline" size={18} color="#6B7280" style={styles.addressIcon} />
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Start typing your address..."
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+          <Text style={styles.helperText}>Address will be autocompleted.</Text>
+        </View>
+
+        {/* Total Floors & Total Rooms */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Total Floors</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 5"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Total Rooms</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 20"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Rent Cycle */}
+        <View style={styles.section}>
+          <View style={styles.rentCycleHeader}>
+            <Text style={styles.label}>Rent Cycle</Text>
+            <TouchableOpacity style={styles.dropdown}>
+              <Text style={styles.dropdownText}>{rentCycle}</Text>
+              <Ionicons name="chevron-down" size={18} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.infoRow}>
+            <Ionicons name="information-circle-outline" size={16} color="#6B7280" />
+            <Text style={styles.infoText}>
+              This sets the default billing period for all units in this property. You can override it for specific units later.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} onPress={() => router.push('/add-property')}>
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="grid" size={20} color="#1601AA" />
+          <Text style={[styles.tabText, styles.tabActive]}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/properties')}>
+          <Ionicons name="business-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>Properties</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="construct-outline" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>Requests</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
+          <Text style={styles.tabText}>More</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  backBtn: { padding: 4 },
+  headerTitle: { fontSize: 18, fontFamily: FontFamily.interBold, fontWeight: '700', color: '#111827' },
+
+  scroll: { flex: 1 },
+
+  // Section
+  section: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 10,
+  },
+
+  // Segmented Control
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 4,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  segmentActive: {
+    backgroundColor: '#DBEAFE',
+  },
+  segmentText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  segmentTextActive: {
+    color: '#1601AA',
+    fontWeight: '600',
+  },
+
+  // Input
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#111827',
+  },
+
+  // Property Type Grid
+  propertyTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  propertyTypeBtn: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  propertyTypeBtnActive: {
+    borderColor: '#1601AA',
+    backgroundColor: '#F8FAFC',
+  },
+  propertyTypeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  propertyTypeTextActive: {
+    color: '#1601AA',
+    fontWeight: '600',
+  },
+
+  // Address Input
+  addressInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+  },
+  addressIcon: {
+    marginRight: 10,
+  },
+  addressInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#111827',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 6,
+  },
+
+  // Row
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+
+  // Rent Cycle
+  rentCycleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 8,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    bottom: 88,
+    alignSelf: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1601AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1601AA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  // Tab Bar
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    paddingBottom: 22,
+    paddingTop: 8,
+  },
+  tabItem: { flex: 1, alignItems: 'center' },
+  tabText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
+  tabActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold, fontWeight: '500' },
+});
+

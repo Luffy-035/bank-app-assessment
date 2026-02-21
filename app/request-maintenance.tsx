@@ -1,0 +1,230 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+export default function RequestMaintenanceScreen() {
+  const [category] = useState('Plumbing');
+  const [description, setDescription] = useState('');
+
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Request Maintenance</Text>
+          <View style={{ width: 22 }} />
+        </View>
+
+        {/* Your Information Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>Your Information</Text>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Tenant Name</Text>
+            <Text style={styles.infoValue}>Ananya Sharma</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Room Number</Text>
+            <Text style={styles.infoValue}>A-203</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Phone Number</Text>
+            <Text style={styles.infoValue}>+91 98765 43210</Text>
+          </View>
+        </View>
+
+        {/* Issue Details Section */}
+        <Text style={styles.sectionHeader}>Issue Details</Text>
+
+        {/* Category */}
+        <Text style={styles.label}>Category</Text>
+        <TouchableOpacity style={styles.dropdown}>
+          <Text style={styles.dropdownText}>{category}</Text>
+          <Ionicons name="chevron-down" size={20} color="#1F2937" />
+        </TouchableOpacity>
+
+        {/* Description */}
+        <Text style={styles.label}>Description</Text>
+        <TextInput
+          style={styles.textarea}
+          placeholder="Please describe the issue in detail..."
+          placeholderTextColor="#9CA3AF"
+          multiline
+          textAlignVertical="top"
+          value={description}
+          onChangeText={setDescription}
+        />
+
+        {/* Attachments */}
+        <Text style={styles.label}>Attachments (Optional)</Text>
+        <View style={styles.attachmentsRow}>
+          <TouchableOpacity style={styles.attachBox}>
+            <Ionicons name="camera" size={22} color="#1601AA" />
+            <Text style={styles.attachLabel}>Add Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.attachBox}>
+            <Ionicons name="mic" size={22} color="#1601AA" />
+            <Text style={styles.attachLabel}>Record Voice</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Bottom Button */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.back()}>
+          <Text style={styles.addBtnText}>Add Request</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scroll: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.interBold,
+    color: '#1F2937',
+  },
+  infoCard: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#9CA3AF',
+  },
+  infoValue: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#1F2937',
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontFamily: FontFamily.interBold,
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontFamily: FontFamily.lato,
+    color: '#374151',
+    marginBottom: 8,
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 20,
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#1F2937',
+  },
+  textarea: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#1F2937',
+    height: 120,
+    marginBottom: 20,
+  },
+  attachmentsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  attachBox: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  attachLabel: {
+    fontSize: 12,
+    fontFamily: FontFamily.latoSemiBold,
+    color: '#374151',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 34,
+  },
+  addBtn: {
+    backgroundColor: '#1601AA',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  addBtnText: {
+    fontSize: 15,
+    fontFamily: FontFamily.interSemiBold,
+    color: '#FFFFFF',
+  },
+});

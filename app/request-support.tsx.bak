@@ -1,0 +1,517 @@
+import { FontFamily } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useRef } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+export default function RequestSupportScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#111827" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Request Support</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={{ paddingBottom: 0 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Technician Card */}
+          <View style={styles.techCard}>
+            <View style={styles.techLeft}>
+              <View style={styles.avatar} />
+              <View>
+                <Text style={styles.techName}>Alex Morgan</Text>
+                <Text style={styles.techRole}>Assigned Technician</Text>
+              </View>
+            </View>
+            <View style={styles.techActions}>
+              <TouchableOpacity style={styles.callBtn}>
+                <Ionicons name="call" size={16} color="#1E40AF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.chatBtn}>
+                <Ionicons name="chatbubble-ellipses" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Info Row */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>ETA</Text>
+              <Text style={styles.infoValue}>15 Mins</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Estimated Cost</Text>
+              <Text style={styles.infoValue}>$75 - $120</Text>
+            </View>
+          </View>
+
+          {/* Progress Tracker */}
+          <View style={styles.progressWrapper}>
+            {/* Progress Line */}
+            <View style={styles.progressLineContainer}>
+              <View style={styles.progressLineBg} />
+              <View style={styles.progressLineFill} />
+            </View>
+            {/* Steps */}
+            <View style={styles.stepsRow}>
+              <View style={styles.stepItem}>
+                <View style={styles.stepDotDone}>
+                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                </View>
+                <Text style={styles.stepTextDone}>Received</Text>
+              </View>
+              <View style={styles.stepItem}>
+                <View style={styles.stepDotDone}>
+                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                </View>
+                <Text style={styles.stepTextDone}>Assigned</Text>
+              </View>
+              <View style={styles.stepItem}>
+                <View style={styles.stepDotCurrent}>
+                  <Ionicons name="bicycle" size={12} color="#1E40AF" />
+                </View>
+                <Text style={styles.stepText}>In Transit</Text>
+              </View>
+              <View style={styles.stepItem}>
+                <View style={styles.stepDotPending}>
+                  <Ionicons name="construct" size={12} color="#9CA3AF" />
+                </View>
+                <Text style={styles.stepText}>Completed</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Chat Area */}
+          <View style={styles.chatArea}>
+            {/* Date Badge */}
+            <View style={styles.dateBadgeWrap}>
+              <View style={styles.dateBadge}>
+                <Text style={styles.dateBadgeText}>Today, 04:15 PM</Text>
+              </View>
+            </View>
+
+            {/* System Message */}
+            <Text style={styles.systemMsg}>Technician Alex Morgan has been assigned.</Text>
+
+            {/* Incoming */}
+            <View style={styles.incomingBubble}>
+              <Text style={styles.incomingText}>
+                Hi! I'm on my way to fix the leaking faucet.{'\n'}I should be there in about 15 minutes.
+              </Text>
+              <Text style={styles.incomingTime}>4:18 PM</Text>
+            </View>
+
+            {/* Outgoing */}
+            <View style={styles.outgoingWrap}>
+              <View style={styles.outgoingBubble}>
+                <Text style={styles.outgoingText}>Great, thank you! See you soon.</Text>
+                <Text style={styles.outgoingTime}>4:19 PM</Text>
+              </View>
+            </View>
+
+            {/* Status */}
+            <View style={styles.statusWrap}>
+              <Text style={styles.statusText}>STATUS: TECHNICIAN IN TRANSIT</Text>
+            </View>
+
+            {/* Incoming */}
+            <View style={styles.incomingBubble}>
+              <Text style={styles.incomingText}>I've arrived at the location.</Text>
+              <Text style={styles.incomingTime}>4:32 PM</Text>
+            </View>
+          </View>
+
+          <View style={{ height: 16 }} />
+        </ScrollView>
+
+        {/* Bottom Area */}
+        <View style={styles.bottomArea}>
+          {/* Quick Replies */}
+          <View style={styles.quickRow}>
+            <TouchableOpacity style={styles.quickBadge}>
+              <Ionicons name="thumbs-up" size={14} color="#1E40AF" />
+              <Text style={styles.quickText}>Okay, thanks!</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickBadge}>
+              <Ionicons name="time" size={14} color="#1E40AF" />
+              <Text style={styles.quickText}>When will you arrive?</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Input Row */}
+          <View style={styles.inputRow}>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.input}
+                placeholder="Type your message..."
+                placeholderTextColor="#9CA3AF"
+                onFocus={handleInputFocus}
+              />
+            </View>
+            <TouchableOpacity style={styles.sendBtn}>
+              <Ionicons name="send" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.resolvedBtn}>
+              <Text style={styles.resolvedText}>Resolved</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 52,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.interBold,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  scroll: {
+    flex: 1,
+  },
+  techCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  techLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#1E40AF',
+    backgroundColor: '#FFFFFF',
+  },
+  techName: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  techRole: {
+    fontSize: 12,
+    fontFamily: FontFamily.lato,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+  techActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  callBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#1E40AF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#1E40AF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    gap: 10,
+  },
+  infoCard: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: 11,
+    fontFamily: FontFamily.lato,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 15,
+    fontFamily: FontFamily.interBold,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  progressWrapper: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    position: 'relative',
+  },
+  progressLineContainer: {
+    position: 'absolute',
+    top: 12,
+    left: 40,
+    right: 40,
+    height: 6,
+  },
+  progressLineBg: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 6,
+    backgroundColor: '#E5E7EB',
+  },
+  progressLineFill: {
+    position: 'absolute',
+    left: 0,
+    width: '60%',
+    height: 6,
+    backgroundColor: '#1E40AF',
+  },
+  stepsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  stepItem: {
+    alignItems: 'center',
+    width: 65,
+  },
+  stepDotDone: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#1E40AF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  stepDotCurrent: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  stepDotPending: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  stepTextDone: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  stepText: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  chatArea: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  dateBadgeWrap: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dateBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  dateBadgeText: {
+    fontSize: 11,
+    color: '#6B7280',
+  },
+  systemMsg: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  incomingBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    borderTopLeftRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    maxWidth: '85%',
+    marginBottom: 12,
+  },
+  incomingText: {
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#111827',
+    lineHeight: 20,
+  },
+  incomingTime: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
+  outgoingWrap: {
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  outgoingBubble: {
+    backgroundColor: '#1E40AF',
+    borderRadius: 16,
+    borderTopRightRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    maxWidth: '78%',
+  },
+  outgoingText: {
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#FFFFFF',
+    lineHeight: 20,
+  },
+  outgoingTime: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
+  statusWrap: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  statusText: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  bottomArea: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  quickBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#DBEAFE',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  quickText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#1E40AF',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inputBox: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 26,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  input: {
+    fontSize: 14,
+    fontFamily: FontFamily.lato,
+    color: '#111827',
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1E40AF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resolvedBtn: {
+    backgroundColor: '#1E40AF',
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  resolvedText: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+});
