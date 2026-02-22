@@ -134,19 +134,6 @@ export default function TenantDashboard() {
           </View>
         </View>
 
-        {/* Pro Tip Card */}
-        <View style={styles.proTipCard}>
-          <View style={styles.proTipHeader}>
-            <View style={styles.proTipIcon}>
-              <Ionicons name="bulb" size={16} color="#1601AA" />
-            </View>
-            <Text style={styles.proTipTitle}>Pro Tip</Text>
-          </View>
-          <Text style={styles.proTipText}>Enable autopay to never miss a rent payment and earn reward points!</Text>
-          <TouchableOpacity style={styles.enableAutopayButton}>
-            <Text style={styles.enableAutopayText}>Enable Autopay</Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Electricity Usage */}
         <View style={styles.section}>
@@ -615,51 +602,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: FontFamily.lato,
     color: '#6B7280',
-  },
-  proTipCard: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 16,
-  },
-  proTipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  proTipIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proTipTitle: {
-    fontSize: 13,
-    fontFamily: FontFamily.latoSemiBold,
-    color: '#11181C',
-  },
-  proTipText: {
-    fontSize: 12,
-    fontFamily: FontFamily.lato,
-    color: '#6B7280',
-    lineHeight: 16,
-    marginBottom: 10,
-  },
-  enableAutopayButton: {
-    backgroundColor: '#1601AA',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-  },
-  enableAutopayText: {
-    fontSize: 11,
-    fontFamily: FontFamily.interSemiBold,
-    color: '#FFFFFF',
   },
   electricityCard: {
     backgroundColor: '#FEF7ED',

@@ -37,6 +37,8 @@ const APARTMENT_CONFIGS = ['1RK', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK+', 'Pent
 export default function PropertiesScreen() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showActionPicker, setShowActionPicker] = useState(false);
+  const [showAddPayment, setShowAddPayment] = useState(false);
 
   // Add Property form state
   const [selectedType, setSelectedType] = useState('building');
@@ -49,6 +51,11 @@ export default function PropertiesScreen() {
   const [rentCycle, setRentCycle] = useState('1');
   const [showUnitDropdown, setShowUnitDropdown] = useState(false);
   const [showFloorUnitDropdown, setShowFloorUnitDropdown] = useState(false);
+
+  // Add Payment form state
+  const [paymentTenant, setPaymentTenant] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('');
 
   const getCurrentFloorUnits = () => floorUnits[activeFloor] || '4';
 
@@ -81,6 +88,12 @@ export default function PropertiesScreen() {
     setRentCycle('1');
     setShowUnitDropdown(false);
     setShowFloorUnitDropdown(false);
+  };
+
+  const resetPaymentForm = () => {
+    setPaymentTenant('');
+    setPaymentAmount('');
+    setPaymentDescription('');
   };
 
   const ordinalSuffix = (n: number) => {
@@ -152,9 +165,9 @@ export default function PropertiesScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* FAB → opens modal */}
+      {/* FAB → opens action picker */}
       <Animated.View style={[styles.fab, { transform: [{ translateY: fabTranslateY }] }]}>
-        <TouchableOpacity style={styles.fabBtn} onPress={() => { resetForm(); setShowAddModal(true); }}>
+        <TouchableOpacity style={styles.fabBtn} onPress={() => setShowActionPicker(true)}>
           <Ionicons name="add" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
@@ -341,6 +354,137 @@ export default function PropertiesScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Action Picker Modal ── */}
+      <Modal visible={showActionPicker} animationType="slide" transparent onRequestClose={() => setShowActionPicker(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalDismiss} onPress={() => setShowActionPicker(false)} />
+          <View style={styles.pickerSheet}>
+            <View style={styles.pickerHandle} />
+            <Text style={styles.pickerTitle}>What would you like to add?</Text>
+            <TouchableOpacity
+              style={styles.pickerOption}
+              onPress={() => { setShowActionPicker(false); resetForm(); setShowAddModal(true); }}
+            >
+              <View style={[styles.pickerIconWrap, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="business-outline" size={24} color="#1601AA" />
+              </View>
+              <View style={styles.pickerTextWrap}>
+                <Text style={styles.pickerOptionTitle}>Add Property</Text>
+                <Text style={styles.pickerOptionSub}>Register a new property to manage</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+            <View style={styles.pickerDivider} />
+            <TouchableOpacity
+              style={styles.pickerOption}
+              onPress={() => { setShowActionPicker(false); resetPaymentForm(); setShowAddPayment(true); }}
+            >
+              <View style={[styles.pickerIconWrap, { backgroundColor: '#ECFDF5' }]}>
+                <Ionicons name="cash-outline" size={24} color="#059669" />
+              </View>
+              <View style={styles.pickerTextWrap}>
+                <Text style={styles.pickerOptionTitle}>Add Payment</Text>
+                <Text style={styles.pickerOptionSub}>Record a rent or other payment</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+            <View style={{ height: 28 }} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Add Payment Modal ── */}
+      <Modal visible={showAddPayment} animationType="slide" transparent onRequestClose={() => setShowAddPayment(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalDismiss} onPress={() => setShowAddPayment(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.pickerHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Record Payment</Text>
+              <TouchableOpacity onPress={() => setShowAddPayment(false)} style={styles.modalClose}>
+                <Ionicons name="close" size={22} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+              {/* Summary Card */}
+              <View style={styles.pmSummaryCard}>
+                <View style={styles.pmBillRow}>
+                  <Text style={styles.pmBillLabel}>Total Amount</Text>
+                  <Text style={styles.pmBillAmount}>₹8,500</Text>
+                </View>
+                <View style={styles.pmBillRow}>
+                  <View style={styles.pmDeductionRow}>
+                    <View style={styles.pmMinusCircle}><Text style={styles.pmMinusText}>−</Text></View>
+                    <Text style={styles.pmBillLabel}>Amount Paid</Text>
+                  </View>
+                  <Text style={styles.pmBillAmountPaid}>₹8,000</Text>
+                </View>
+                <View style={styles.pmDashedDivider} />
+                <View style={styles.pmBillRow}>
+                  <View style={styles.pmDeductionRow}>
+                    <View style={styles.pmEqualsCircle}><Text style={styles.pmEqualsText}>=</Text></View>
+                    <Text style={styles.pmDueLabel}>Due</Text>
+                  </View>
+                  <Text style={styles.pmDueAmount}>₹500</Text>
+                </View>
+              </View>
+
+              <Text style={styles.pmFieldLabel}>Search by tenant name, number or ID</Text>
+              <TextInput
+                style={styles.pmInput}
+                placeholder="e.g., Rahul Kumar"
+                placeholderTextColor="#9CA3AF"
+                value={paymentTenant}
+                onChangeText={setPaymentTenant}
+              />
+
+              <Text style={styles.pmFieldLabel}>Amount paid</Text>
+              <TextInput
+                style={styles.pmInput}
+                placeholder="e.g., 8500"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+                value={paymentAmount}
+                onChangeText={setPaymentAmount}
+              />
+
+              <Text style={styles.pmFieldLabel}>Payment date</Text>
+              <View style={styles.pmDateRow}>
+                <Text style={styles.pmDateText}>Dec 21, 2025</Text>
+                <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+              </View>
+              <View style={styles.pmUnderline} />
+
+              <Text style={styles.pmFieldLabel}>Payment mode</Text>
+              <View style={styles.pmDateRow}>
+                <Text style={[styles.pmDateText, { color: '#9CA3AF' }]}></Text>
+                <Ionicons name="chevron-down" size={20} color="#6B7280" />
+              </View>
+              <View style={styles.pmUnderline} />
+
+              <Text style={styles.pmFieldLabel}>Description (optional)</Text>
+              <TextInput
+                style={styles.pmTextArea}
+                placeholder="Add a note..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                textAlignVertical="top"
+                maxLength={200}
+                value={paymentDescription}
+                onChangeText={setPaymentDescription}
+              />
+              <Text style={styles.pmCharCount}>{paymentDescription.length}/200</Text>
+
+              <TouchableOpacity style={styles.pmSubmitBtn} onPress={() => setShowAddPayment(false)}>
+                <Text style={styles.pmSubmitText}>Save Payment</Text>
+              </TouchableOpacity>
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -481,4 +625,40 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginTop: 24,
   },
   submitText: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#FFFFFF' },
+
+  // ── Action Picker
+  pickerSheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 12, paddingHorizontal: 20 },
+  pickerHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 12 },
+  pickerTitle: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 20, textAlign: 'center' },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, gap: 14 },
+  pickerIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  pickerTextWrap: { flex: 1 },
+  pickerOptionTitle: { fontSize: 15, fontFamily: FontFamily.interSemiBold, color: '#111827' },
+  pickerOptionSub: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280', marginTop: 2 },
+  pickerDivider: { height: 1, backgroundColor: '#F3F4F6' },
+
+  // ── Add Payment form
+  pmSummaryCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 18, marginTop: 16, marginBottom: 8, borderWidth: 1, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 },
+  pmBillRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  pmBillLabel: { fontSize: 14, fontFamily: FontFamily.lato, color: '#6B7280' },
+  pmBillAmount: { fontSize: 20, fontFamily: FontFamily.interBold, color: '#1F2937' },
+  pmBillAmountPaid: { fontSize: 16, fontFamily: FontFamily.interSemiBold, color: '#22C55E' },
+  pmDeductionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pmMinusCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' },
+  pmMinusText: { fontSize: 14, fontFamily: FontFamily.interBold, color: '#EF4444', marginTop: -2 },
+  pmEqualsCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  pmEqualsText: { fontSize: 12, fontFamily: FontFamily.interBold, color: '#2563EB' },
+  pmDueLabel: { fontSize: 15, fontFamily: FontFamily.interBold, color: '#1F2937' },
+  pmDueAmount: { fontSize: 20, fontFamily: FontFamily.interBold, color: '#EF4444' },
+  pmDashedDivider: { height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: '#D1D5DB', marginVertical: 6 },
+  pmFieldLabel: { fontSize: 14, fontFamily: FontFamily.interSemiBold, color: '#111827', marginTop: 20, marginBottom: 10 },
+  pmInput: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, fontFamily: FontFamily.lato, color: '#111827' },
+  pmDateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  pmDateText: { fontSize: 14, fontFamily: FontFamily.lato, color: '#111827' },
+  pmUnderline: { height: 1, backgroundColor: '#E5E7EB', marginBottom: 4 },
+  pmTextArea: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 12, height: 100, fontSize: 13, fontFamily: FontFamily.lato, color: '#111827', backgroundColor: '#F9FAFB' },
+  pmCharCount: { alignSelf: 'flex-end', fontSize: 11, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 4 },
+  pmSubmitBtn: { backgroundColor: '#1601AA', borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
+  pmSubmitText: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#FFFFFF' },
 });
+

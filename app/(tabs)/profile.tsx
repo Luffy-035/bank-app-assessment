@@ -1,7 +1,7 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 
 export default function ProfileScreen() {
-  const [autopayEnabled, setAutopayEnabled] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -143,25 +142,6 @@ export default function ProfileScreen() {
             </View>
             <TouchableOpacity>
               <Text style={styles.changeLink}>Change</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.cardDivider} />
-
-          <View style={styles.autopayRow}>
-            <View style={styles.autopayTextContainer}>
-              <Text style={styles.autopayTitle}>Enable Autopay</Text>
-              <Text style={styles.autopaySubtitle}>
-                Automatically pay rent on the 1st of each month.
-              </Text>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setAutopayEnabled(!autopayEnabled)}
-            >
-              <View style={[styles.customSwitch, autopayEnabled && styles.customSwitchActive]}>
-                <View style={[styles.customSwitchThumb, autopayEnabled && styles.customSwitchThumbActive]} />
-              </View>
             </TouchableOpacity>
           </View>
 
@@ -377,28 +357,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.interSemiBold,
     color: '#1601AA',
   },
-  autopayRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  autopayTextContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  autopayTitle: {
-    fontSize: 14,
-    fontFamily: FontFamily.latoSemiBold,
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  autopaySubtitle: {
-    fontSize: 11,
-    fontFamily: FontFamily.lato,
-    color: '#9CA3AF',
-    lineHeight: 16,
-  },
   currencyLabel: {
     fontSize: 14,
     fontFamily: FontFamily.latoSemiBold,
@@ -454,34 +412,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: FontFamily.lato,
     color: '#6B7280',
-  },
-  customSwitch: {
-    width: 42,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#D1D5DB',
-    padding: 2,
-    justifyContent: 'center',
-  },
-  customSwitchActive: {
-    backgroundColor: '#1601AA',
-  },
-  customSwitchThumb: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  customSwitchThumbActive: {
-    alignSelf: 'flex-end',
-    borderColor: 'transparent',
   },
   landlordHeader: {
     flexDirection: 'row',

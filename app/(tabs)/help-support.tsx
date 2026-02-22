@@ -1,160 +1,145 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Linking,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
-const faqItems = [
-  {
-    id: '1',
-    question: 'How do I reset my password?',
-    answer: 'You can reset your password by going to',
-  },
-  {
-    id: '2',
-    question: 'How can I update my payment method?',
-    answer: "Navigate to the 'Profile' section from the",
-  },
-  {
-    id: '3',
-    question: 'Where can I find my rental agreement?',
-    answer: 'All your documents, including the rental',
-  },
-  {
-    id: '4',
-    question: 'How to resolve a dispute with your landlord?',
-    answer: 'If you have a dispute with your landlord, first try to communicate directly and document all interactions. You can use our in-app messaging feature to keep a record. If unresolved, submit a formal complaint through the "Request Support" section, and our mediation team will assist you within 48 hours.',
-  },
-];
-
 export default function HelpSupportScreen() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </TouchableOpacity>
+        <View style={{ width: 24 }} />
         <Text style={styles.headerTitle}>Help & Support</Text>
-        <View style={{ width: 22 }} />
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero Section */}
+        {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.heroIconContainer}>
             <Ionicons name="headset" size={32} color="#FFFFFF" />
           </View>
-          <Text style={styles.heroTitle}>Need help?</Text>
-          <Text style={styles.heroSubtitle}>Chat live or send us an email anytime!</Text>
+          <Text style={styles.heroTitle}>We're here to help!</Text>
+          <Text style={styles.heroSubtitle}>
+            Have a question or need assistance?{'\n'}Our team is ready to support you.
+          </Text>
         </View>
 
-        {/* Contact Cards */}
-        <View style={styles.contactSection}>
-          <View style={styles.contactRow}>
-            <TouchableOpacity style={styles.contactCard} activeOpacity={0.8} onPress={() => router.push('/request-support')}>
-              <View style={styles.contactIconWrapper}>
-                <Ionicons name="chatbubble-ellipses" size={22} color="#1E40AF" />
+        {/* Get in Touch */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.cardHeaderTitle}>Get in Touch</Text>
+
+          <TouchableOpacity
+            style={[styles.contactRow, styles.contactRowLiveChat]}
+            activeOpacity={0.8}
+            onPress={() => router.push('/request-support')}
+          >
+            <View style={styles.contactLeft}>
+              <View style={styles.contactIconWrapChat}>
+                <Ionicons name="chatbubbles" size={22} color="#1601AA" />
               </View>
-              <Text style={styles.contactTitle}>Live Chat</Text>
-              <Text style={styles.contactSubtitle}>Avg. wait: 2 mins</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.contactCard} activeOpacity={0.8} onPress={() => Linking.openURL('tel:+918001234567')}>
-              <View style={styles.contactIconWrapper}>
-                <Ionicons name="call" size={22} color="#1E40AF" />
+              <View>
+                <Text style={styles.contactTitle}>Live Chat</Text>
+                <Text style={styles.contactSubtitle}>Fastest way to get help</Text>
               </View>
-              <Text style={styles.contactTitle}>Call Us</Text>
-              <Text style={styles.contactSubtitle}>+91 800-123-4567</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+
+          <View style={{ height: 12 }} />
+
+          <TouchableOpacity
+            style={[styles.contactRow, styles.contactRowEmail]}
+            activeOpacity={0.8}
+            onPress={() => Linking.openURL('mailto:support@blew.in')}
+          >
+            <View style={styles.contactLeft}>
+              <View style={styles.contactIconWrapEmail}>
+                <Ionicons name="mail" size={20} color="#374151" />
+              </View>
+              <View>
+                <Text style={styles.contactTitle}>Email Us</Text>
+                <Text style={styles.contactSubtitle}>We'll reply within 24 hours</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Find Answers Yourself */}
+        <View style={styles.sectionCard2}>
+          <Text style={styles.cardHeaderTitle}>Find Answers Yourself</Text>
+          <View style={styles.listContainer}>
+            <TouchableOpacity style={styles.listItem}>
+              <View style={styles.listIconWrap}>
+                <Ionicons name="book" size={20} color="#6B7280" />
+              </View>
+              <Text style={styles.listText}>Knowledge Base</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+            <View style={styles.listDivider} />
+            <TouchableOpacity style={styles.listItem}>
+              <View style={styles.listIconWrap}>
+                <Ionicons name="help-circle" size={22} color="#6B7280" />
+              </View>
+              <Text style={styles.listText}>Frequently Asked Questions</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* FAQ Section */}
-        <View style={styles.faqSection}>
-          <Text style={styles.faqTitle}>Frequently Asked Questions</Text>
-
-          <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={18} color="#9CA3AF" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search for questions..."
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-
-          <View style={styles.faqList}>
-            {faqItems.map((item) => {
-              const expanded = expandedId === item.id;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.faqCard}
-                  activeOpacity={0.8}
-                  onPress={() => setExpandedId(expanded ? null : item.id)}
-                >
-                  <View style={styles.faqContent}>
-                    <Text style={styles.faqQuestion}>{item.question}</Text>
-                    {expanded && <Text style={styles.faqAnswer}>{item.answer}</Text>}
-                  </View>
-                  <Ionicons
-                    name={expanded ? 'chevron-up' : 'chevron-down'}
-                    size={18}
-                    color="#9CA3AF"
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+        {/* Feedback */}
+        <View style={styles.feedbackCard}>
+          <Text style={styles.feedbackTitle}>Have a suggestion?</Text>
+          <Text style={styles.feedbackSubtitle}>
+            We're always looking to improve. Share your{'\n'}feedback with us!
+          </Text>
+          <TouchableOpacity style={styles.feedbackButton}>
+            <Text style={styles.feedbackButtonText}>Give Feedback</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 50,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
     backgroundColor: '#FFFFFF',
-  },
-  backBtn: {
-    padding: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
   headerTitle: {
     fontSize: 17,
     fontFamily: FontFamily.interSemiBold,
     color: '#111827',
   },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
+
+  // Hero
   hero: {
     backgroundColor: '#DBEAFE',
     alignItems: 'center',
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
+    paddingTop: 28,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
   },
   heroIconContainer: {
     width: 64,
@@ -163,47 +148,74 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E40AF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   heroTitle: {
     fontSize: 18,
     fontFamily: FontFamily.interBold,
     color: '#1E40AF',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   heroSubtitle: {
     fontSize: 13,
     fontFamily: FontFamily.lato,
     color: '#4B5563',
     textAlign: 'center',
+    lineHeight: 20,
   },
-  contactSection: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    backgroundColor: '#F8FAFC',
+
+  // Get in Touch card
+  sectionCard: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sectionCard2: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
+  cardHeaderTitle: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    color: '#111827',
+    marginBottom: 14,
+    marginLeft: 2,
   },
   contactRow: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  contactCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
   },
-  contactIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#DBEAFE',
+  contactRowLiveChat: { backgroundColor: '#E8E6FA' },
+  contactRowEmail: { backgroundColor: '#F9FAFB' },
+  contactLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  contactIconWrapChat: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(22, 1, 170, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+  },
+  contactIconWrapEmail: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contactTitle: {
     fontSize: 14,
@@ -212,61 +224,83 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   contactSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: FontFamily.lato,
-    color: '#9CA3AF',
+    color: '#6B7280',
   },
-  faqSection: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
+
+  // Find answers
+  listContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  faqTitle: {
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  listDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginLeft: 56,
+  },
+  listIconWrap: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  listText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    color: '#374151',
+  },
+
+  // Feedback
+  feedbackCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 8,
+  },
+  feedbackTitle: {
     fontSize: 16,
     fontFamily: FontFamily.interBold,
     color: '#111827',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 14,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    fontFamily: FontFamily.lato,
-    color: '#111827',
-  },
-  faqList: {
-    gap: 8,
-  },
-  faqCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 0,
-  },
-  faqContent: {
-    flex: 1,
-    marginRight: 8,
-  },
-  faqQuestion: {
-    fontSize: 14,
-    fontFamily: FontFamily.latoSemiBold,
-    color: '#111827',
-    marginBottom: 4,
-  },
-  faqAnswer: {
+  feedbackSubtitle: {
     fontSize: 13,
     fontFamily: FontFamily.lato,
-    color: '#9CA3AF',
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  feedbackButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#1601AA',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+  },
+  feedbackButtonText: {
+    fontSize: 14,
+    fontFamily: FontFamily.interSemiBold,
+    color: '#1601AA',
   },
 });

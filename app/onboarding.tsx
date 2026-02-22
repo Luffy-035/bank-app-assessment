@@ -321,7 +321,7 @@ export default function OnboardingScreen() {
             <View style={root.header}>
                 {SLIDES[currentIndex].bg === 'dark' && (
                     <TouchableOpacity onPress={handleFinish} style={root.skipBtn}>
-                        <Text style={root.skipText}>Done</Text>
+                        <Text style={root.skipText}>Skip</Text>
                     </TouchableOpacity>
                 )}
             </View>
