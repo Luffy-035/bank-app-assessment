@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OTPScreen() {
   const router = useRouter();
-  const [code, setCode] = useState(['2', '', '', '']);
+  const [code, setCode] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(20);
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -91,7 +91,7 @@ export default function OTPScreen() {
           {code.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => (inputRefs.current[index] = ref)}
+              ref={(ref) => { inputRefs.current[index] = ref; }}
               style={[
                 styles.codeInput,
                 digit && styles.codeInputFilled,
@@ -109,7 +109,7 @@ export default function OTPScreen() {
         {/* Verify Button */}
         <TouchableOpacity
           style={styles.verifyButton}
-          onPress={() => router.push('/role-selection')}
+          onPress={() => router.push('/landlord-create-account')}
         >
           <Text style={styles.verifyButtonText}>Verify</Text>
         </TouchableOpacity>

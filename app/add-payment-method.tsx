@@ -24,7 +24,7 @@ export default function AddPaymentMethodScreen() {
   };
 
   const handleSkip = () => {
-    console.log('Skip pressed');
+    // intentional no-op: skip is handled by navigation context
   };
 
   return (

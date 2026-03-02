@@ -1,17 +1,23 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Modal,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
+import { getProperty, getUnits } from '@/services/property.service';
+import { addTenant } from '@/services/tenant.service';
+import type { Property, Unit } from '@/types/property.types';
 
 const { width, height } = Dimensions.get('window');
 const heroHeight = height * 0.72;
@@ -40,49 +46,6 @@ interface Floor {
   rooms: Room[];
 }
 
-// Mock data for the property
-const propertyData = {
-  name: 'Wings Tower',
-  location: 'Jakarta, Indonesia',
-  rating: 4.9,
-  type: 'Apartment',
-  additionalImages: 3,
-  floors: [
-    {
-      name: 'First Floor',
-      rooms: [
-        {
-          number: '101', type: '1BHK', status: 'occupied' as RoomStatus,
-          tenant: { name: 'Alice Johnson', gender: 'Female', rentAmount: '$1,200', paymentStatus: 'Paid', phoneNumber: '+62 812-3456-7890', meterStatus: 'connected' }
-        },
-        {
-          number: '102', type: '1BHK', status: 'occupied' as RoomStatus,
-          tenant: { name: 'Bob Smith', gender: 'Male', rentAmount: '$1,200', paymentStatus: 'Pending', phoneNumber: '+62 812-9876-5432', meterStatus: 'disconnected' }
-        },
-        { number: '103', type: '1RK', status: 'vacant' as RoomStatus },
-        {
-          number: '104', type: '1BHK', status: 'on-notice' as RoomStatus,
-          tenant: { name: 'Charlie Davis', gender: 'Male', rentAmount: '$1,200', paymentStatus: 'Paid', phoneNumber: '+62 812-1111-2222', meterStatus: 'not_linked' }
-        },
-      ],
-    },
-    {
-      name: 'Second Floor',
-      rooms: [
-        {
-          number: '201', type: '1BHK', status: 'occupied' as RoomStatus,
-          tenant: { name: 'Diana Prince', gender: 'Female', rentAmount: '$1,300', paymentStatus: 'Paid', phoneNumber: '+62 812-3333-4444', meterStatus: 'connected' }
-        },
-        { number: '202', type: '1BHK', status: 'vacant' as RoomStatus },
-        {
-          number: '203', type: '1RK', status: 'on-notice' as RoomStatus,
-          tenant: { name: 'Evan Wright', gender: 'Male', rentAmount: '$900', paymentStatus: 'Overdue', phoneNumber: '+62 812-5555-6666', meterStatus: 'not_linked' }
-        },
-        { number: '204', type: '1BHK', status: 'vacant' as RoomStatus },
-      ],
-    },
-  ] as Floor[],
-};
 
 const getOccupiedCount = (rooms: Room[]) => {
   return rooms.filter((r) => r.status === 'occupied').length;
@@ -106,40 +69,127 @@ const getRoomTextColor = (status: RoomStatus) => {
 
 export default function PropertyDetailsScreen() {
   const params = useLocalSearchParams();
-  const propertyName = (params.name as string) || propertyData.name;
+  const propertyId = (params.id as string) || '';
+
+  const [property, setProperty] = useState<Property | null>(null);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!propertyId) { setLoading(false); return; }
+    Promise.all([getProperty(propertyId), getUnits(propertyId)])
+      .then(([prop, unitList]) => { setProperty(prop); setUnits(unitList); })
+      .catch(() => { })
+      .finally(() => setLoading(false));
+  }, [propertyId]);
+
+  // Group units by floor into Floor/Room types for existing UI
+  const floors: Floor[] = React.useMemo(() => {
+    const floorMap: Record<number, Room[]> = {};
+    units.forEach((u) => {
+      const fn = u.floorNumber ?? 0;
+      if (!floorMap[fn]) floorMap[fn] = [];
+      const isOccupied = u.status === 'occupied';
+      const tenantInfo = u.currentTenantId;
+      floorMap[fn].push({
+        number: u.unitNumber,
+        type: u.unitConfig,
+        status: isOccupied ? 'occupied' : 'vacant',
+        tenant: isOccupied && tenantInfo ? {
+          name: tenantInfo.userId?.name ?? 'Tenant',
+          gender: '',
+          rentAmount: `₹${u.rentAmount.toLocaleString('en-IN')}`,
+          paymentStatus: 'Pending',
+          phoneNumber: tenantInfo.userId?.phone ?? '',
+        } : undefined,
+      });
+    });
+    return Object.entries(floorMap)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([floor, rooms]) => ({
+        name: Number(floor) === 0 ? 'Ground Floor' : `Floor ${floor}`,
+        rooms,
+      }));
+  }, [units]);
+
+  const propertyName = property?.name ?? (params.name as string) ?? 'Property';
+  const propertyAddress = property?.address ?? '';
+  const propertyType = property?.type ?? '';
+  const totalUnits = units.length;
+  const occupiedCount = units.filter(u => u.status === 'occupied').length;
   const [selectedRoom, setSelectedRoom] = React.useState<Room | null>(null);
 
   // Add Tenant modal state
   const [addTenantRoom, setAddTenantRoom] = React.useState<Room | null>(null);
   const [tenantName, setTenantName] = React.useState('');
   const [tenantPhone, setTenantPhone] = React.useState('');
+  const [tenantRentAmount, setTenantRentAmount] = React.useState('');
   const [generatedTenantId, setGeneratedTenantId] = React.useState<string | null>(null);
-
-  const generateTenantId = () => {
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
-    return `TEN-${yy}${mm}${dd}-${rand}`;
-  };
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleRoomPress = (room: Room) => {
     if (room.status === 'vacant') {
+      const matchedUnit = units.find((u) => u.unitNumber === room.number);
       setAddTenantRoom(room);
       setTenantName('');
       setTenantPhone('');
+      setTenantRentAmount(matchedUnit?.rentAmount ? String(matchedUnit.rentAmount) : '');
       setGeneratedTenantId(null);
     } else {
       setSelectedRoom(room);
     }
   };
 
-  const handleAddTenant = () => {
-    if (!tenantName.trim()) return;
-    const id = generateTenantId();
-    setGeneratedTenantId(id);
+  const handleAddTenant = async () => {
+    if (!tenantName.trim() || !tenantPhone.trim()) return;
+    const rentAmountNum = Number(tenantRentAmount);
+    if (!tenantRentAmount || isNaN(rentAmountNum) || rentAmountNum < 1) {
+      Alert.alert('Missing Field', 'Please enter a valid rent amount (minimum ₹1).');
+      return;
+    }
+    const matchingUnit = units.find((u) => u.unitNumber === addTenantRoom?.number);
+    if (!matchingUnit) {
+      Alert.alert('Error', 'Could not find unit details. Please try again.');
+      return;
+    }
+    const today = new Date();
+    const leaseEnd = new Date(today);
+    leaseEnd.setFullYear(leaseEnd.getFullYear() + 1);
+    setSubmitting(true);
+    try {
+      const result = await addTenant({
+        name: tenantName.trim(),
+        phone: tenantPhone.trim(),
+        unitId: matchingUnit._id,
+        rentAmount: rentAmountNum,
+        securityDeposit: 0,
+        rentCycle: 1,
+        leaseStart: today.toISOString(),
+        leaseEnd: leaseEnd.toISOString(),
+      });
+      setGeneratedTenantId(result.tenantId);
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to add tenant. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleShareTenantId = async () => {
+    if (!generatedTenantId) return;
+    await Share.share({
+      message: `Hi ${tenantName}, your Blew tenant account is ready!\n\nTenant ID: ${generatedTenantId}\nPhone: ${tenantPhone}\n\nUse your Tenant ID + phone number to log in to the Blew app.`,
+      title: 'Tenant Login Details',
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#1601AA" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -171,13 +221,12 @@ export default function PropertyDetailsScreen() {
             {/* Bottom badges */}
             <View style={styles.heroBadges}>
               <View style={styles.ratingBadge}>
-                <Ionicons name="star" size={12} color="#FFFFFF" />
-                <Text style={styles.ratingText}>{propertyData.rating}</Text>
+                <Ionicons name="home" size={12} color="#FFFFFF" />
                 <View style={styles.ratingDivider} />
-                <Text style={styles.ratingText}>8 Units</Text>
+                <Text style={styles.ratingText}>{totalUnits} Units</Text>
               </View>
               <View style={styles.typeBadge}>
-                <Text style={styles.typeBadgeText}>{propertyData.type}</Text>
+                <Text style={styles.typeBadgeText}>{propertyType}</Text>
               </View>
             </View>
           </View>
@@ -185,11 +234,12 @@ export default function PropertyDetailsScreen() {
 
         {/* Property Info */}
         <View style={styles.propertyInfo}>
-          <Text style={styles.propertyName}>{propertyData.name}</Text>
+          <Text style={styles.propertyName}>{propertyName}</Text>
           <View style={styles.locationRow}>
             <Ionicons name="location" size={14} color="#22C55E" />
-            <Text style={styles.locationText}>{propertyData.location}</Text>
+            <Text style={styles.locationText}>{propertyAddress}</Text>
           </View>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>{occupiedCount}/{totalUnits} units occupied</Text>
         </View>
 
 
@@ -215,7 +265,7 @@ export default function PropertyDetailsScreen() {
         </View>
 
         {/* Floor Sections */}
-        {propertyData.floors.map((floor, index) => (
+        {floors.length > 0 ? floors.map((floor, index) => (
           <View key={index} style={styles.floorSection}>
             <View style={styles.floorHeader}>
               <Text style={styles.floorName}>{floor.name}</Text>
@@ -249,7 +299,13 @@ export default function PropertyDetailsScreen() {
               ))}
             </View>
           </View>
-        ))}
+        )) : (
+          <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+            <Ionicons name="home-outline" size={40} color="#D1D5DB" />
+            <Text style={{ color: '#9CA3AF', marginTop: 8, fontFamily: FontFamily.lato }}>No units found for this property.</Text>
+          </View>
+        )}
+
 
         <View style={{ height: 24 }} />
 
@@ -457,9 +513,23 @@ export default function PropertyDetailsScreen() {
                 <Text style={styles.atSuccessTitle}>Tenant Added!</Text>
                 <Text style={styles.atSuccessSubtitle}>Share this Tenant ID with the tenant to log in:</Text>
                 <View style={styles.atIdBox}>
-                  <Text style={styles.atIdText}>{generatedTenantId}</Text>
+                  <TextInput
+                    style={styles.atIdText}
+                    value={generatedTenantId}
+                    editable
+                    selectTextOnFocus
+                    onChangeText={() => { /* controlled — value prop keeps it read-only */ }}
+                  />
                 </View>
-                <Text style={styles.atIdNote}>The tenant uses this ID to log in and access their portal.</Text>
+                <TouchableOpacity
+                  onPress={() => Share.share({ message: generatedTenantId ?? '' })}
+                  style={{ marginBottom: 6 }}
+                >
+                  <Text style={{ fontSize: 13, color: '#1601AA', fontFamily: FontFamily.interSemiBold, textAlign: 'center' }}>📋  Tap to Copy ID</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.atDoneBtn, { backgroundColor: '#EEF2FF', marginBottom: 10 }]} onPress={handleShareTenantId}>
+                  <Text style={[styles.atDoneBtnText, { color: '#1601AA' }]}>📤  Share Login Details</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.atDoneBtn} onPress={() => setAddTenantRoom(null)}>
                   <Text style={styles.atDoneBtnText}>Done</Text>
                 </TouchableOpacity>
@@ -486,7 +556,7 @@ export default function PropertyDetailsScreen() {
                   onChangeText={setTenantName}
                 />
 
-                <Text style={styles.atLabel}>Phone Number</Text>
+                <Text style={styles.atLabel}>Phone Number *</Text>
                 <TextInput
                   style={styles.atInput}
                   placeholder="+91 XXXXX XXXXX"
@@ -496,16 +566,29 @@ export default function PropertyDetailsScreen() {
                   onChangeText={setTenantPhone}
                 />
 
+                <Text style={styles.atLabel}>Monthly Rent (₹) *</Text>
+                <TextInput
+                  style={styles.atInput}
+                  placeholder="e.g. 8000"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                  value={tenantRentAmount}
+                  onChangeText={setTenantRentAmount}
+                />
+
                 <Text style={styles.atNote}>
                   A unique Tenant ID will be generated. Share it with the tenant so they can log in.
                 </Text>
 
                 <TouchableOpacity
-                  style={[styles.atSubmitBtn, !tenantName.trim() && styles.atSubmitBtnDisabled]}
+                  style={[styles.atSubmitBtn, (!tenantName.trim() || !tenantPhone.trim() || submitting) && styles.atSubmitBtnDisabled]}
                   onPress={handleAddTenant}
-                  disabled={!tenantName.trim()}
+                  disabled={!tenantName.trim() || !tenantPhone.trim() || submitting}
                 >
-                  <Text style={styles.atSubmitText}>Generate Tenant ID</Text>
+                  {submitting
+                    ? <ActivityIndicator color="#FFFFFF" />
+                    : <Text style={styles.atSubmitText}>Add Tenant</Text>
+                  }
                 </TouchableOpacity>
               </View>
             )}

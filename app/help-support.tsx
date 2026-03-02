@@ -3,15 +3,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import React from 'react';
 import {
+    Alert,
     Image,
+    Linking,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SUPPORT_PHONE, SUPPORT_EMAIL } from '@/constants/contact';
 
 export default function HelpSupportScreen() {
+    const handleCall = () => Linking.openURL(`tel:${SUPPORT_PHONE}`);
+    const handleMail = () => Linking.openURL(`mailto:${SUPPORT_EMAIL}`);
+    const handleFAQ = () => Alert.alert('FAQs', 'Frequently asked questions will be available in a future update.');
+    const handleFeedback = () => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Feedback&body=Hi Blew team, I have a suggestion: `);
+
     return (
         <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -27,13 +35,11 @@ export default function HelpSupportScreen() {
 
                 {/* Support Image */}
                 <View style={styles.imageBackgroundWrapper}>
-                    <View style={styles.imageBackground}>
-                        <Image
-                            source={require('@/assets/images/customer-support-illustration.jpg')}
-                            style={styles.supportImage}
-                            resizeMode="contain"
-                        />
-                    </View>
+                    <Image
+                        source={require('@/assets/images/customer-support-illustration.jpg')}
+                        style={styles.supportImage}
+                        resizeMode="contain"
+                    />
                 </View>
 
                 {/* Title */}
@@ -42,61 +48,49 @@ export default function HelpSupportScreen() {
                     Have a question or need assistance? Our team is{'\n'}ready to support you.
                 </Text>
 
-                {/* Get in Touch Section */}
+                {/* Contact Options */}
                 <View style={styles.sectionCard}>
                     <Text style={styles.cardHeaderTitle}>Get in Touch</Text>
-                    <TouchableOpacity style={[styles.contactRow, styles.contactRowLiveChat]}>
-                        <View style={styles.contactLeft}>
-                            <View style={styles.contactIconWrapChat}>
-                                <Ionicons name="chatbubbles" size={22} color="#1601AA" />
-                            </View>
-                            <View>
-                                <Text style={styles.contactTitle}>Live Chat</Text>
-                                <Text style={styles.contactSubtitle}>Fastest way to get help</Text>
-                            </View>
+
+                    {/* Call Us */}
+                    <TouchableOpacity style={styles.contactRow} onPress={handleCall} activeOpacity={0.75}>
+                        <View style={[styles.contactIconWrap, { backgroundColor: '#EEF2FF' }]}>
+                            <Ionicons name="call" size={20} color="#1601AA" />
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                        <View style={styles.contactText}>
+                            <Text style={styles.contactTitle}>Call Us</Text>
+                            <Text style={styles.contactSubtitle}>Need assistance? Contact our support team directly by phone.</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
                     </TouchableOpacity>
 
-                    <View style={{ height: 12 }} />
+                    <View style={styles.rowDivider} />
 
-                    <TouchableOpacity style={[styles.contactRow, styles.contactRowEmail]}>
-                        <View style={styles.contactLeft}>
-                            <View style={styles.contactIconWrapEmail}>
-                                <Ionicons name="mail" size={20} color="#374151" />
-                            </View>
-                            <View>
-                                <Text style={styles.contactTitle}>Email Us</Text>
-                                <Text style={styles.contactSubtitle}>We'll reply within 24 hours</Text>
-                            </View>
+                    {/* Mail Us */}
+                    <TouchableOpacity style={styles.contactRow} onPress={handleMail} activeOpacity={0.75}>
+                        <View style={[styles.contactIconWrap, { backgroundColor: '#ECFDF5' }]}>
+                            <Ionicons name="mail" size={20} color="#059669" />
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                        <View style={styles.contactText}>
+                            <Text style={styles.contactTitle}>Mail Us</Text>
+                            <Text style={styles.contactSubtitle}>Send us an email and we will get back to you as soon as possible.</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
                     </TouchableOpacity>
-                </View>
 
-                {/* Find Answers Yourself Section */}
-                <View style={styles.sectionCard2}>
-                    <Text style={styles.cardHeaderTitle}>Find Answers Yourself</Text>
+                    <View style={styles.rowDivider} />
 
-                    <View style={styles.listContainer}>
-                        <TouchableOpacity style={styles.listItem}>
-                            <View style={styles.listIconWrap}>
-                                <Ionicons name="book" size={20} color="#6B7280" />
-                            </View>
-                            <Text style={styles.listText}>Knowledge Base</Text>
-                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                        </TouchableOpacity>
-
-                        <View style={styles.listDivider} />
-
-                        <TouchableOpacity style={styles.listItem}>
-                            <View style={styles.listIconWrap}>
-                                <Ionicons name="help-circle" size={22} color="#6B7280" />
-                            </View>
-                            <Text style={styles.listText}>Frequently Asked Questions</Text>
-                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    </View>
+                    {/* FAQs */}
+                    <TouchableOpacity style={styles.contactRow} onPress={handleFAQ} activeOpacity={0.75}>
+                        <View style={[styles.contactIconWrap, { backgroundColor: '#FFF7ED' }]}>
+                            <Ionicons name="help-circle" size={20} color="#EA580C" />
+                        </View>
+                        <View style={styles.contactText}>
+                            <Text style={styles.contactTitle}>FAQs</Text>
+                            <Text style={styles.contactSubtitle}>Find answers to the most commonly asked questions.</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Feedback Section */}
@@ -105,7 +99,7 @@ export default function HelpSupportScreen() {
                     <Text style={styles.feedbackSubtitle}>
                         We're always looking to improve. Share your{'\n'}feedback with us!
                     </Text>
-                    <TouchableOpacity style={styles.feedbackButton}>
+                    <TouchableOpacity style={styles.feedbackButton} onPress={handleFeedback}>
                         <Text style={styles.feedbackButtonText}>Give Feedback</Text>
                     </TouchableOpacity>
                 </View>
@@ -132,23 +126,14 @@ export default function HelpSupportScreen() {
                     <Text style={[styles.tabText, styles.tabActive]}>More</Text>
                 </TouchableOpacity>
             </View>
-
-            {/* FAB */}
-            <TouchableOpacity style={styles.fab} onPress={() => router.push('/add-property')}>
-                <Ionicons name="add" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    scroll: {
-        flex: 1,
-    },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    scroll: { flex: 1 },
+
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -157,224 +142,71 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
         paddingHorizontal: 20,
     },
-    backButton: {
-        width: 24,
-        height: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    headerTitle: {
-        fontSize: 17,
-        fontFamily: FontFamily.interSemiBold,
-        color: '#111827',
-    },
-    imageBackgroundWrapper: {
-        alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 24,
-    },
-    imageBackground: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    supportImage: {
-        width: '80%',
-        height: 180,
-    },
+    backButton: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { fontSize: 17, fontFamily: FontFamily.interSemiBold, color: '#111827' },
+
+    imageBackgroundWrapper: { alignItems: 'center', marginTop: 8, marginBottom: 20 },
+    supportImage: { width: '75%', height: 170 },
+
     mainTitle: {
-        fontSize: 18,
-        fontFamily: FontFamily.interBold,
-        color: '#111827',
-        textAlign: 'center',
-        marginBottom: 8,
+        fontSize: 18, fontFamily: FontFamily.interBold, color: '#111827',
+        textAlign: 'center', marginBottom: 8,
     },
     subtitle: {
-        fontSize: 12,
-        fontFamily: FontFamily.lato,
-        color: '#6B7280',
-        textAlign: 'center',
-        lineHeight: 18,
-        marginBottom: 24,
-        paddingHorizontal: 32,
+        fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280',
+        textAlign: 'center', lineHeight: 18, marginBottom: 28, paddingHorizontal: 32,
     },
+
     sectionCard: {
-        marginHorizontal: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
-        marginBottom: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    sectionCard2: {
-        marginHorizontal: 16,
-        marginBottom: 24,
+        marginHorizontal: 16, backgroundColor: '#FFFFFF', borderRadius: 16,
+        borderWidth: 1, borderColor: '#F0F0F5', marginBottom: 20,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+        overflow: 'hidden',
     },
     cardHeaderTitle: {
-        fontSize: 14,
-        fontFamily: FontFamily.interSemiBold,
-        color: '#111827',
-        marginBottom: 16,
-        marginLeft: 4,
+        fontSize: 13, fontFamily: FontFamily.interSemiBold, color: '#6B7280',
+        letterSpacing: 0.5, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 8,
+        textTransform: 'uppercase',
     },
+
     contactRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 16,
-        borderRadius: 12,
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 18, paddingVertical: 16, gap: 14,
     },
-    contactRowLiveChat: {
-        backgroundColor: '#E8E6FA',
+    contactIconWrap: {
+        width: 44, height: 44, borderRadius: 12,
+        alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
     },
-    contactRowEmail: {
-        backgroundColor: '#F9FAFB',
-    },
-    contactLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 14,
-    },
-    contactIconWrapChat: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: 'rgba(22, 1, 170, 0.1)', // Light blue tint
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    contactIconWrapEmail: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#E5E7EB',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    contactTitle: {
-        fontSize: 14,
-        fontFamily: FontFamily.interSemiBold,
-        color: '#111827',
-        marginBottom: 2,
-    },
-    contactSubtitle: {
-        fontSize: 11,
-        fontFamily: FontFamily.lato,
-        color: '#6B7280',
-    },
-    listContainer: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    listItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-    },
-    listDivider: {
-        height: 1,
-        backgroundColor: '#F3F4F6',
-        marginLeft: 56, // Indent divider
-    },
-    listIconWrap: {
-        width: 24,
-        height: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-    },
-    listText: {
-        flex: 1,
-        fontSize: 14,
-        fontFamily: FontFamily.interSemiBold,
-        color: '#374151',
-    },
+    contactText: { flex: 1 },
+    contactTitle: { fontSize: 15, fontFamily: FontFamily.interSemiBold, color: '#111827', marginBottom: 3 },
+    contactSubtitle: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280', lineHeight: 17 },
+
+    rowDivider: { height: 1, backgroundColor: '#F3F4F6', marginLeft: 76 },
+
     feedbackCard: {
-        marginHorizontal: 16,
-        marginTop: 28,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 20,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
+        marginHorizontal: 16, backgroundColor: '#FFFFFF', borderRadius: 16,
+        padding: 20, alignItems: 'center',
+        borderWidth: 1, borderColor: '#E5E7EB',
     },
-    feedbackTitle: {
-        fontSize: 16,
-        fontFamily: FontFamily.interBold,
-        color: '#111827',
-        marginBottom: 8,
-    },
+    feedbackTitle: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 8 },
     feedbackSubtitle: {
-        fontSize: 13,
-        fontFamily: FontFamily.lato,
-        color: '#6B7280',
-        textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: 16,
+        fontSize: 13, fontFamily: FontFamily.lato, color: '#6B7280',
+        textAlign: 'center', lineHeight: 20, marginBottom: 16,
     },
     feedbackButton: {
-        backgroundColor: '#FFFFFF',
-        borderWidth: 1.5,
-        borderColor: '#1601AA',
-        borderRadius: 12,
-        paddingVertical: 12,
-        paddingHorizontal: 32,
+        backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#1601AA',
+        borderRadius: 12, paddingVertical: 12, paddingHorizontal: 32,
     },
-    feedbackButtonText: {
-        fontSize: 14,
-        fontFamily: FontFamily.interSemiBold,
-        color: '#1601AA',
-    },
-    fab: {
-        position: 'absolute',
-        bottom: 88,
-        alignSelf: 'center',
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: '#1601AA',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#1601AA',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 6,
-    },
+    feedbackButtonText: { fontSize: 14, fontFamily: FontFamily.interSemiBold, color: '#1601AA' },
+
     tabBar: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-        paddingBottom: 22,
-        paddingTop: 8,
+        flexDirection: 'row', backgroundColor: '#FFFFFF',
+        borderTopWidth: 1, borderTopColor: '#E5E7EB',
+        paddingBottom: 22, paddingTop: 8,
     },
-    tabItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    tabText: {
-        fontSize: 10,
-        fontFamily: FontFamily.lato,
-        color: '#9CA3AF',
-        marginTop: 3,
-    },
-    tabActive: {
-        color: '#1601AA',
-        fontFamily: FontFamily.latoSemiBold,
-    },
+    tabItem: { flex: 1, alignItems: 'center' },
+    tabText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
+    tabActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold },
 });

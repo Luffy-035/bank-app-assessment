@@ -29,7 +29,7 @@ export default function CardDetailsScreen() {
   };
 
   const handleSkip = () => {
-    console.log('Skip pressed');
+    // intentional no-op: skip is handled by navigation context
   };
 
   return (

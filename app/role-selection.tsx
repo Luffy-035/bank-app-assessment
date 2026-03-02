@@ -1,148 +1,88 @@
 import { FontFamily } from '@/constants/theme';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+const ROLES = [
+    {
+        id: 'landlord',
+        title: 'Landlord',
+        subtitle: 'Manage your properties, tenants, and rent collection',
+        icon: 'business-outline' as const,
+        color: '#1601AA',
+        bg: '#EEF2FF',
+        route: '/landlord-create-account' as const,
+    },
+    {
+        id: 'tenant',
+        title: 'Tenant',
+        subtitle: 'View your rent, raise requests, and manage your stay',
+        icon: 'people-outline' as const,
+        color: '#16A34A',
+        bg: '#F0FDF4',
+        route: '/tenant-create-account' as const,
+    },
+];
 
 export default function RoleSelectionScreen() {
-  const router = useRouter();
+    return (
+        <View style={styles.container}>
+            {/* Header */}
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={22} color="#111827" />
+            </TouchableOpacity>
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Title */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Welcome!</Text>
-          <Text style={styles.subtitle}>
-            First, let's get you set up. Choose{'\n'}your role to continue.
-          </Text>
+            <Text style={styles.heading}>Create Account</Text>
+            <Text style={styles.subheading}>Choose your role to get started</Text>
+
+            <View style={styles.cards}>
+                {ROLES.map((role) => (
+                    <TouchableOpacity
+                        key={role.id}
+                        style={styles.card}
+                        onPress={() => router.push(role.route)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.iconWrap, { backgroundColor: role.bg }]}>
+                            <Ionicons name={role.icon} size={30} color={role.color} />
+                        </View>
+                        <View style={styles.cardContent}>
+                            <Text style={styles.cardTitle}>{role.title}</Text>
+                            <Text style={styles.cardSubtitle}>{role.subtitle}</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            <View style={styles.loginRow}>
+                <Text style={styles.loginText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.replace('/login')}>
+                    <Text style={styles.loginLink}>Sign In</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-
-        {/* Role Selection Buttons */}
-        <View style={styles.buttonsContainer}>
-          {/* Landlord Button */}
-          <TouchableOpacity
-            style={[styles.roleButton, styles.roleButtonLandlord]}
-            onPress={() => {
-              router.push('/landlord-create-account');
-            }}
-          >
-            <View style={styles.iconContainerLandlord}>
-              <MaterialIcons name="home" size={28} color="#FFFFFF" />
-            </View>
-            <View style={styles.roleTextContainer}>
-              <Text style={styles.roleTitle}>I am a Landlord</Text>
-              <Text style={styles.roleDescription}>Manage properties &{'\n'}tenants.</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Tenant Button */}
-          <TouchableOpacity
-            style={[styles.roleButton, styles.roleButtonTenant]}
-            onPress={() => {
-              router.push('/tenant-create-account');
-            }}
-          >
-            <View style={styles.iconContainerTenant}>
-              <Ionicons name="person" size={26} color="#6B7280" />
-            </View>
-            <View style={styles.roleTextContainer}>
-              <Text style={styles.roleTitle}>I am a Tenant</Text>
-              <Text style={styles.roleDescription}>Pay rent & submit{'\n'}requests.</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 80,
-    justifyContent: 'flex-start',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: FontFamily.latoBold,
-    color: '#1F2937',
-    marginBottom: 12,
-    lineHeight: 40,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontFamily: FontFamily.lato,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  buttonsContainer: {
-    gap: 16,
-  },
-  roleButton: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-  },
-  roleButtonLandlord: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  roleButtonTenant: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  iconContainerLandlord: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: '#312E81',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  iconContainerTenant: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  roleTextContainer: {
-    flex: 1,
-  },
-  roleTitle: {
-    fontSize: 18,
-    fontFamily: FontFamily.latoBold,
-    color: '#1F2937',
-    marginBottom: 4,
-    lineHeight: 24,
-  },
-  roleDescription: {
-    fontSize: 14,
-    fontFamily: FontFamily.lato,
-    color: '#6B7280',
-    lineHeight: 20,
-  },
+    container: { flex: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 24, paddingTop: 60 },
+    backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+    heading: { fontSize: 28, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 6 },
+    subheading: { fontSize: 15, fontFamily: FontFamily.lato, color: '#6B7280', marginBottom: 36 },
+    cards: { gap: 16 },
+    card: {
+        flexDirection: 'row', alignItems: 'center', gap: 16,
+        backgroundColor: '#FFFFFF', borderRadius: 16, padding: 18,
+        borderWidth: 1, borderColor: '#E5E7EB',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    },
+    iconWrap: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    cardContent: { flex: 1 },
+    cardTitle: { fontSize: 17, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 4 },
+    cardSubtitle: { fontSize: 13, fontFamily: FontFamily.lato, color: '#6B7280', lineHeight: 18 },
+    loginRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 40 },
+    loginText: { fontSize: 14, fontFamily: FontFamily.lato, color: '#6B7280' },
+    loginLink: { fontSize: 14, fontFamily: FontFamily.interSemiBold, color: '#1601AA' },
 });

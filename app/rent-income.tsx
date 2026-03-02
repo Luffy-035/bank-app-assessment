@@ -1,7 +1,7 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Alert,
     Dimensions,
@@ -14,30 +14,85 @@ import {
     View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { usePayments } from '@/hooks/usePayments';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 const { width } = Dimensions.get('window');
 
 const tabs = ['All', 'By Property', 'By Tenant', 'By Month'];
 
-const monthlyIncome = [
-    { label: 'Jan', amount: '25k', color: '#1601AA', width: '62%' },
-    { label: 'Feb', amount: '20k', color: '#1601AA', width: '50%' },
-    { label: 'Mar', amount: '35k', color: '#1601AA', width: '87%' },
-    { label: 'Apr', amount: '28k', color: '#1601AA', width: '70%' },
-    { label: 'May', amount: '40k', color: '#1601AA', width: '100%' },
-    { label: 'Jun', amount: '32k', color: '#1601AA', width: '80%' },
-    { label: 'Jul', amount: '38k', color: '#1601AA', width: '95%' },
-];
-
 const PAYMENT_METHODS = ['Cash', 'UPI', 'Cheque', 'Bank Transfer', 'Other'];
 
 export default function RentIncomeScreen() {
+    const { payments, dues, recordPayment } = usePayments();
+    const { stats } = useDashboardStats();
     const [activeTab, setActiveTab] = useState('All');
     const [modalVisible, setModalVisible] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Real summary totals
+    const totalReceived = useMemo(() => payments.reduce((s, p) => s + p.amountPaid, 0), [payments]);
+    const totalDue = useMemo(() => dues.reduce((s, d) => s + d.rentDue, 0), [dues]);
+    const totalPending = useMemo(() => dues.reduce((s, d) => s + d.balance, 0), [dues]);
+
+    // Income comparison: this month vs last month
+    const incomeComparison = useMemo(() => {
+        const now = new Date();
+        const thisMonth = payments
+            .filter((p) => p.month === now.getMonth() + 1 && p.year === now.getFullYear())
+            .reduce((s, p) => s + p.amountPaid, 0);
+        const lastMonth = payments
+            .filter((p) => {
+                const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                return p.month === d.getMonth() + 1 && p.year === d.getFullYear();
+            })
+            .reduce((s, p) => s + p.amountPaid, 0);
+        if (lastMonth === 0) return null; // Not enough data
+        const diff = ((thisMonth - lastMonth) / lastMonth) * 100;
+        return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`;
+    }, [payments]);
+
+    // Payment mode breakdown from real payments
+    const paymentModeStats = useMemo(() => {
+        const total = payments.length || 1;
+        const modes = [
+            { label: 'UPI', key: 'upi', color: '#A5B4FC' },
+            { label: 'Cash', key: 'cash', color: '#1E3A8A' },
+            { label: 'Bank Transfer', key: 'bank_transfer', color: '#1601AA' },
+            { label: 'Cheque', key: 'cheque', color: '#4338CA' },
+            { label: 'Others', key: 'other', color: '#C7D2FE' },
+        ] as const;
+        return modes.map((m) => {
+            const count = payments.filter((p) => p.paymentMode === m.key).length;
+            const pct = Math.round((count / total) * 100);
+            return { ...m, count, pct };
+        }).filter((m) => m.count > 0);
+    }, [payments]);
+
+    // Monthly bar chart derived from real payments (last 7 months)
+    const monthlyIncome = useMemo(() => {
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const now = new Date();
+        const last7: { label: string; month: number; year: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            last7.push({ label: MONTHS[d.getMonth()], month: d.getMonth() + 1, year: d.getFullYear() });
+        }
+        const incomeByMonth = last7.map(({ label, month, year }) => {
+            const total = payments.filter(p => p.month === month && p.year === year).reduce((s, p) => s + p.amountPaid, 0);
+            return { label, amount: total };
+        });
+        const maxIncome = Math.max(...incomeByMonth.map(x => x.amount), 1);
+        return incomeByMonth.map(x => ({
+            label: x.label,
+            amount: x.amount >= 1000 ? `₹${Math.round(x.amount / 1000)}k` : `₹${x.amount}`,
+            color: '#1601AA',
+            width: `${Math.round((x.amount / maxIncome) * 100)}%`,
+        }));
+    }, [payments]);
 
     // Record Payment form state
-    const [payTenantName, setPayTenantName] = useState('');
-    const [payRoomUnit, setPayRoomUnit] = useState('');
+    const [payTenantId, setPayTenantId] = useState('');
     const [payAmount, setPayAmount] = useState('');
     const [payMethod, setPayMethod] = useState('Cash');
     const [payDate, setPayDate] = useState('');
@@ -45,21 +100,40 @@ export default function RentIncomeScreen() {
     const [paymentDone, setPaymentDone] = useState(false);
 
     const resetForm = () => {
-        setPayTenantName('');
-        setPayRoomUnit('');
+        setPayTenantId('');
         setPayAmount('');
         setPayMethod('Cash');
         setPayDate('');
         setPayNotes('');
         setPaymentDone(false);
+        setSubmitting(false);
     };
 
-    const handleMarkComplete = () => {
-        if (!payTenantName.trim() || !payAmount.trim() || !payRoomUnit.trim()) {
-            Alert.alert('Missing Details', 'Please fill in tenant name, room/unit, and amount.');
+    const handleMarkComplete = async () => {
+        if (!payTenantId.trim() || !payAmount.trim()) {
+            Alert.alert('Missing Details', 'Please fill in Tenant ID and amount.');
             return;
         }
-        setPaymentDone(true);
+        const now = new Date();
+        setSubmitting(true);
+        try {
+            await recordPayment({
+                tenantId: payTenantId.trim(),
+                month: now.getMonth() + 1,
+                year: now.getFullYear(),
+                rentDue: Number(payAmount),
+                amountPaid: Number(payAmount),
+                paymentMode: (payMethod.toLowerCase().replace(' ', '_')) as any,
+                paymentDate: payDate || now.toISOString().split('T')[0],
+                notes: payNotes,
+            });
+            setPaymentDone(true);
+            Alert.alert('Success', 'Payment recorded successfully.');
+        } catch (e: any) {
+            Alert.alert('Error', e?.response?.data?.message ?? 'Failed to record payment.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleCloseModal = () => {
@@ -83,27 +157,23 @@ export default function RentIncomeScreen() {
 
                 {/* Summary Section */}
                 <View style={styles.summarySection}>
-                    <Text style={styles.summaryDate}>December 2024</Text>
+                    <Text style={styles.summaryDate}>{new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</Text>
                     <View style={styles.summaryAmountRow}>
-                        <Text style={styles.summaryAmount}>₹48,750</Text>
-                        <View style={styles.percentBadge}>
-                            <Ionicons name="arrow-up" size={10} color="#22C55E" />
-                            <Text style={styles.percentText}>12.5%</Text>
-                        </View>
+                        <Text style={styles.summaryAmount}>₹{totalReceived.toLocaleString('en-IN')}</Text>
                     </View>
-                    <Text style={styles.summarySubtext}>vs last month</Text>
+                    <Text style={styles.summarySubtext}>Total collected this period</Text>
                     <View style={styles.statsRow}>
                         <View style={styles.statBox}>
                             <Text style={styles.statLabel}>Received</Text>
-                            <Text style={styles.statValue}>₹52,400</Text>
+                            <Text style={styles.statValue}>₹{totalReceived.toLocaleString('en-IN')}</Text>
                         </View>
                         <View style={[styles.statBox, styles.statBoxMiddle]}>
                             <Text style={styles.statLabel}>Due</Text>
-                            <Text style={styles.statValue}>₹48,750</Text>
+                            <Text style={styles.statValue}>₹{totalDue.toLocaleString('en-IN')}</Text>
                         </View>
                         <View style={styles.statBox}>
                             <Text style={styles.statLabel}>Overdue</Text>
-                            <Text style={styles.statValue}>₹2,850</Text>
+                            <Text style={styles.statValue}>₹{totalPending.toLocaleString('en-IN')}</Text>
                         </View>
                     </View>
                 </View>
@@ -137,7 +207,7 @@ export default function RentIncomeScreen() {
                             <Ionicons name="cash-outline" size={18} color="#1601AA" />
                         </View>
                         <View style={styles.snapshotContent}>
-                            <Text style={styles.snapshotValue}>+12.5%</Text>
+                            <Text style={styles.snapshotValue}>{incomeComparison ?? 'N/A'}</Text>
                             <Text style={styles.snapshotLabel}>Income Comparison</Text>
                         </View>
                     </View>
@@ -146,7 +216,7 @@ export default function RentIncomeScreen() {
                             <Ionicons name="construct-outline" size={18} color="#1601AA" />
                         </View>
                         <View style={styles.snapshotContent}>
-                            <Text style={styles.snapshotValue}>₹4,200</Text>
+                            <Text style={styles.snapshotValue}>₹{(stats?.maintenanceCostThisMonth ?? 0).toLocaleString('en-IN')}</Text>
                             <Text style={styles.snapshotLabel}>Maintenance Expense</Text>
                         </View>
                     </View>
@@ -198,39 +268,23 @@ export default function RentIncomeScreen() {
                     <Ionicons name="chevron-forward" size={20} color="#6B7280" />
                 </TouchableOpacity>
 
-                {/* Payment Methods - Pie Chart */}
+                {/* Payment Methods */}
                 <View style={styles.chartCard}>
                     <Text style={styles.chartTitle}>Payment Methods</Text>
-                    <View style={styles.pieChartContainer}>
-                        <View style={styles.pieWrapper}>
-                            <Svg width={180} height={180} viewBox="0 0 180 180">
-                                <Path d="M 90 90 L 90 5 A 85 85 0 1 1 7 110 Z" fill="#A5B4FC" />
-                                <Path d="M 90 90 L 7 110 A 85 85 0 0 1 35 25 Z" fill="#1E3A8A" />
-                                <Path d="M 90 90 L 35 25 A 85 85 0 0 1 75 6 Z" fill="#4338CA" />
-                                <Path d="M 90 90 L 75 6 A 85 85 0 0 1 90 5 Z" fill="#C7D2FE" />
-                            </Svg>
-                            <View style={styles.upiLabel}>
-                                <View style={styles.upiLine} />
-                                <Text style={styles.pieLabelName}>UPI</Text>
-                                <Text style={styles.pieLabelPercent}>31%</Text>
+                    {payments.length === 0 ? (
+                        <Text style={{ fontSize: 13, fontFamily: FontFamily.lato, color: '#9CA3AF', textAlign: 'center', paddingVertical: 20 }}>No payment data yet.</Text>
+                    ) : (
+                        paymentModeStats.map((m) => (
+                            <View key={m.key} style={styles.expenseRow}>
+                                <Text style={styles.expenseLabel}>{m.label}</Text>
+                                <View style={styles.expenseBarContainer}>
+                                    <View style={[styles.expenseBar, { width: `${m.pct}%` as any, backgroundColor: m.color }]}>
+                                        <Text style={styles.expenseAmount}>{m.pct}%</Text>
+                                    </View>
+                                </View>
                             </View>
-                            <View style={styles.cashLabel}>
-                                <View style={styles.cashLine} />
-                                <Text style={styles.pieLabelName}>Cash</Text>
-                                <Text style={styles.pieLabelPercent}>13%</Text>
-                            </View>
-                            <View style={styles.othersLabel}>
-                                <View style={styles.othersLine} />
-                                <Text style={styles.pieLabelName}>Others</Text>
-                                <Text style={styles.pieLabelPercent}>4.5%</Text>
-                            </View>
-                            <View style={styles.bankLabel}>
-                                <View style={styles.bankLabelLine} />
-                                <Text style={[styles.pieLabelName, { color: '#1601AA' }]}>Bank Transfer</Text>
-                                <Text style={[styles.pieLabelPercent, { color: '#1601AA' }]}>50.3%</Text>
-                            </View>
-                        </View>
-                    </View>
+                        ))
+                    )}
                 </View>
 
                 {/* Export Report — placed right after charts */}
@@ -297,7 +351,7 @@ export default function RentIncomeScreen() {
                                 </View>
                                 <Text style={modal.successTitle}>Payment Recorded!</Text>
                                 <Text style={modal.successSub}>
-                                    ₹{payAmount} received from {payTenantName} ({payRoomUnit}) via {payMethod} has been marked as completed.
+                                    ₹{payAmount} recorded for Tenant ID: {payTenantId} via {payMethod}.
                                 </Text>
                                 <TouchableOpacity style={modal.doneBtn} onPress={handleCloseModal}>
                                     <Text style={modal.doneBtnText}>Done</Text>
@@ -314,24 +368,15 @@ export default function RentIncomeScreen() {
                                 </View>
                                 <Text style={modal.subtitle}>Enter details for offline payment received</Text>
 
-                                {/* Tenant Name */}
-                                <Text style={modal.label}>Tenant Name *</Text>
+                                {/* Tenant ID */}
+                                <Text style={modal.label}>Tenant ID *</Text>
                                 <TextInput
                                     style={modal.input}
-                                    placeholder="e.g. John Smith"
-                                    value={payTenantName}
-                                    onChangeText={setPayTenantName}
+                                    placeholder="e.g. T001"
+                                    value={payTenantId}
+                                    onChangeText={setPayTenantId}
                                     placeholderTextColor="#9CA3AF"
-                                />
-
-                                {/* Room / Unit */}
-                                <Text style={modal.label}>Room / Unit *</Text>
-                                <TextInput
-                                    style={modal.input}
-                                    placeholder="e.g. Unit 5B"
-                                    value={payRoomUnit}
-                                    onChangeText={setPayRoomUnit}
-                                    placeholderTextColor="#9CA3AF"
+                                    autoCapitalize="characters"
                                 />
 
                                 {/* Amount */}

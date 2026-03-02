@@ -1,37 +1,31 @@
+import { useAuth } from '@/context/AuthContext';
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Index() {
-    const [isReady, setIsReady] = useState(false);
-    const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+/**
+ * Root entry point.
+ * - While auth is loading → show a spinner
+ * - Authenticated landlord → landlord-dashboard
+ * - Authenticated tenant → (tabs) home
+ * - Unauthenticated → onboarding
+ */
+export default function IndexScreen() {
+    const { isLoading, isAuthenticated, user } = useAuth();
 
-    useEffect(() => {
-        async function checkState() {
-            try {
-                const value = await AsyncStorage.getItem('@has_seen_onboarding');
-                setHasSeenOnboarding(value === 'true');
-            } catch (e) {
-                // Error reading value
-            } finally {
-                setIsReady(true);
-            }
-        }
-        checkState();
-    }, []);
-
-    if (!isReady) {
+    if (isLoading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#0000ff" />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+                <ActivityIndicator size="large" color="#1601AA" />
             </View>
         );
     }
 
-    if (!hasSeenOnboarding) {
-        return <Redirect href="/onboarding" />;
+    if (isAuthenticated && user) {
+        if (user.role === 'landlord') {
+            return <Redirect href="/landlord-dashboard" />;
+        }
+        return <Redirect href="/(tabs)" />;
     }
 
-    return <Redirect href="/login" />;
+    return <Redirect href="/onboarding" />;
 }

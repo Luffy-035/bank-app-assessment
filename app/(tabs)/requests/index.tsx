@@ -1,101 +1,75 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useMaintenance } from '@/hooks/useMaintenance';
+import type { MaintenanceRequest as APIRequest } from '@/types/maintenance.types';
 
 type FilterType = 'All' | 'Pending' | 'In Progress' | 'Resolved';
-type RequestStatus = 'Pending' | 'In Progress' | 'Resolved';
+type DisplayStatus = 'Pending' | 'In Progress' | 'Resolved';
 
-interface MaintenanceRequest {
-  id: string;
-  title: string;
-  status: RequestStatus;
-  location: string;
-  tenant: string;
-  technician?: string;
-  eta?: string;
-  completedOn?: string;
-}
-
-const requests: MaintenanceRequest[] = [
-  {
-    id: '1',
-    title: 'Leaky Faucet in Kitchen',
-    status: 'Pending',
-    location: 'Unit 101, 123 Main St',
-    tenant: 'Jane Doe',
-    technician: 'Awaiting technician assignment',
-    eta: 'ETA: Not yet scheduled',
-  },
-  {
-    id: '2',
-    title: 'Broken AC Unit',
-    status: 'In Progress',
-    location: 'Unit 204, 456 Oak Ave',
-    tenant: 'John Smith',
-    technician: "Mike's HVAC Services",
-    eta: 'ETA: Today, 2:00 PM',
-  },
-  {
-    id: '3',
-    title: 'Clogged Bathroom Drain',
-    status: 'Resolved',
-    location: 'Unit 10B, 789 Pine Ln',
-    tenant: 'Emily White',
-    technician: 'ProPlumbers Inc.',
-    completedOn: 'Completed on Nov 14',
-  },
-];
+const toDisplayStatus = (s: string): DisplayStatus => {
+  if (s === 'in_progress') return 'In Progress';
+  if (s === 'resolved' || s === 'closed') return 'Resolved';
+  return 'Pending';
+};
 
 export default function RequestsScreen() {
+  const { requests: raw, loading, refetch } = useMaintenance();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
+
+  // Re-fetch every time the screen comes into focus so newly submitted requests appear immediately
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const filters: FilterType[] = ['All', 'Pending', 'In Progress', 'Resolved'];
 
-  const filteredRequests = requests.filter((request) => {
-    if (activeFilter === 'All') return true;
-    return request.status === activeFilter;
+  const requests: { id: string; title: string; status: DisplayStatus; location: string; description: string }[] = raw.map((r: APIRequest) => {
+    const displayStatus = toDisplayStatus(r.status);
+    const unit = (r.unitId as any)?.unitNumber ?? '';
+    const property = (r.propertyId as any)?.name ?? '';
+    const location = [property, unit ? `Unit ${unit}` : ''].filter(Boolean).join(' · ');
+    return { id: r._id, title: r.title, status: displayStatus, location: location || 'Unknown location', description: r.description };
   });
 
-  const getStatusColors = (status: RequestStatus) => {
+  const filteredRequests = requests.filter((r: { status: DisplayStatus }) =>
+    activeFilter === 'All' || r.status === activeFilter
+  );
+
+  const getStatusColors = (status: DisplayStatus) => {
     switch (status) {
-      case 'Pending':
-        return { bg: '#FEE2E2', color: '#EF4444', strip: '#EF4444', badgeBg: '#EF4444', badgeText: '#FFFFFF' };
-      case 'In Progress':
-        return { bg: '#FEF3C7', color: '#F59E0B', strip: '#F59E0B', badgeBg: '#F59E0B', badgeText: '#FFFFFF' };
-      case 'Resolved':
-        return { bg: '#DCFCE7', color: '#22C55E', strip: '#22C55E', badgeBg: '#22C55E', badgeText: '#FFFFFF' };
+      case 'Pending': return { bg: '#FEE2E2', color: '#EF4444' };
+      case 'In Progress': return { bg: '#FEF3C7', color: '#F59E0B' };
+      case 'Resolved': return { bg: '#DCFCE7', color: '#22C55E' };
     }
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#11181C" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Maintenance request</Text>
+          <Text style={styles.headerTitle}>Maintenance Requests</Text>
           <View style={{ width: 24 }} />
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.newRequestBtn}
-            onPress={() => router.push('/request-maintenance')}
-          >
+          <TouchableOpacity style={styles.newRequestBtn} onPress={() => router.push('/request-maintenance')}>
             <Ionicons name="add" size={18} color="#FFFFFF" />
             <Text style={styles.newRequestLabel}>New Request</Text>
           </TouchableOpacity>
@@ -105,72 +79,56 @@ export default function RequestsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Requests Cards */}
+        {/* Filter Tabs */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {filters.map((f) => (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setActiveFilter(f)}
+                style={[styles.filterChip, activeFilter === f && { backgroundColor: '#1601AA', borderColor: '#1601AA' }]}
+              >
+                <Text style={[styles.filterChipText, activeFilter === f && { color: '#FFFFFF' }]}>{f}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Request Cards */}
         <View style={styles.cardsList}>
-          {filteredRequests.map((request) => {
+          {loading ? (
+            <ActivityIndicator size="large" color="#1601AA" style={{ marginTop: 32 }} />
+          ) : filteredRequests.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <Ionicons name="construct-outline" size={40} color="#D1D5DB" />
+              <Text style={{ color: '#9CA3AF', marginTop: 10, fontFamily: FontFamily.lato }}>No requests found.</Text>
+            </View>
+          ) : filteredRequests.map((request) => {
             const statusColors = getStatusColors(request.status);
             const isResolved = request.status === 'Resolved';
             const isPending = request.status === 'Pending';
-
             return (
-              <TouchableOpacity
-                key={request.id}
-                style={styles.card}
-                activeOpacity={0.7}
-                onPress={() => router.push('/request-support')}
-              >
-                {/* Header Row: Title + Status Badge */}
+              <TouchableOpacity key={request.id} style={styles.card} activeOpacity={0.7}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{request.title}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
                     <Text style={[styles.statusText, { color: statusColors.color }]}>{request.status}</Text>
                   </View>
                 </View>
-
-                {/* Location & Tenant */}
-                <Text style={styles.locationText}>
-                  {request.location} - {request.tenant}
-                </Text>
-
-                {/* Technician Assignment */}
+                <Text style={styles.locationText}>{request.location}</Text>
                 <View style={styles.techRow}>
-                  <Ionicons
-                    name={isPending ? "people-outline" : "person-circle-outline"}
-                    size={18}
-                    color={isPending ? "#6B7280" : "#1601AA"}
-                  />
-                  <Text style={[
-                    styles.techText,
-                    !isPending && { color: '#1F2937', fontWeight: '500' }
-                  ]}>
-                    {request.technician}
+                  <Ionicons name={isPending ? 'time-outline' : isResolved ? 'checkmark-circle-outline' : 'construct-outline'} size={16} color={isResolved ? '#22C55E' : '#6B7280'} />
+                  <Text style={[styles.techText, isResolved && { color: '#22C55E' }]}>
+                    {isPending ? 'Awaiting attention' : isResolved ? 'Completed' : 'In progress'}
                   </Text>
                 </View>
-
-                {/* ETA & View History */}
-                <View style={styles.cardFooter}>
-                  <View style={styles.etaRow}>
-                    <Ionicons
-                      name={isResolved ? "checkmark-circle-outline" : "time-outline"}
-                      size={16}
-                      color={isResolved ? "#22C55E" : "#6B7280"}
-                    />
-                    <Text style={[
-                      styles.etaText,
-                      isResolved && { color: '#22C55E' }
-                    ]}>
-                      {request.eta || request.completedOn}
-                    </Text>
-                  </View>
-                  <TouchableOpacity>
-                    <Text style={styles.viewHistoryLink}>View History</Text>
-                  </TouchableOpacity>
-                </View>
+                {request.description ? (
+                  <Text style={[styles.techText, { marginTop: 4 }]} numberOfLines={2}>{request.description}</Text>
+                ) : null}
               </TouchableOpacity>
             );
           })}
         </View>
-
         <View style={{ height: 20 }} />
       </ScrollView>
     </View>
@@ -363,5 +321,18 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.interSemiBold,
     color: '#1601AA',
     textDecorationLine: 'underline',
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontFamily: FontFamily.interMedium,
+    color: '#6B7280',
   },
 });

@@ -2,10 +2,15 @@ import { FontFamily } from '@/constants/theme';
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { usePayments } from '@/hooks/usePayments';
+import { useProperties } from '@/hooks/useProperties';
 import {
+  Alert,
   Animated,
   Dimensions,
-  Image,
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
@@ -26,6 +31,15 @@ const RENT_CYCLE_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const UNIT_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '15', '20'];
 
 export default function LandlordDashboardScreen() {
+  const { user } = useAuth();
+  const { stats, loading: statsLoading } = useDashboardStats();
+  const { dues, recordPayment, refetch: refetchPayments } = usePayments();
+  const { properties, addProperty, refetch: refetchProperties } = useProperties();
+
+  // Derived real data
+  const overdueDues = dues.filter((d) => d.balance > 0);
+  const overdueDuesCount = overdueDues.length;
+  const initials = (user?.name ?? 'L').trim().split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
   // FAB scroll animation
   const fabAnim = React.useRef(new Animated.Value(0)).current;
   const lastOffsetY = React.useRef(0);
@@ -44,11 +58,13 @@ export default function LandlordDashboardScreen() {
   const [floorUnits, setFloorUnits] = useState<Record<number, string>>({});
   const [rentCycle, setRentCycle] = useState('1');
   const [showFloorUnitDropdown, setShowFloorUnitDropdown] = useState(false);
+  const [propSubmitting, setPropSubmitting] = useState(false);
 
   // Add Payment form state
   const [paymentTenant, setPaymentTenant] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
+  const [paySubmitting, setPaySubmitting] = useState(false);
 
   const getCurrentFloorUnits = () => floorUnits[activeFloor] || '4';
 
@@ -67,6 +83,63 @@ export default function LandlordDashboardScreen() {
     setPaymentTenant('');
     setPaymentAmount('');
     setPaymentDescription('');
+  };
+
+  const handleAddProperty = async () => {
+    if (!propertyName.trim()) { Alert.alert('Missing Field', 'Please enter a property name.'); return; }
+    if (!propertyAddress.trim()) { Alert.alert('Missing Field', 'Please enter an address.'); return; }
+    setPropSubmitting(true);
+    try {
+      await addProperty({
+        name: propertyName.trim(),
+        address: propertyAddress.trim(),
+        type: selectedType as 'building' | 'floor' | 'pg',
+        totalFloors: parseInt(totalFloors || '1', 10),
+        rentCycle: parseInt(rentCycle, 10),
+      });
+      await refetchProperties();
+      setShowAddProperty(false);
+      resetPropertyForm();
+      Alert.alert('Success', 'Property added successfully.');
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to add property. Please try again.');
+    } finally {
+      setPropSubmitting(false);
+    }
+  };
+
+  const handleAddPayment = async () => {
+    const amountNum = Number(paymentAmount);
+    if (!paymentTenant.trim()) { Alert.alert('Missing Field', 'Please enter a tenant name or ID.'); return; }
+    if (!amountNum || amountNum <= 0) { Alert.alert('Validation', 'Please enter a valid amount.'); return; }
+    // Find matching due by tenant name or display ID
+    const matchedDue = dues.find((d: any) =>
+      (d.tenant?.userId?.name?.toLowerCase().includes(paymentTenant.toLowerCase())) ||
+      (d.tenant?.tenantId?.toLowerCase().includes(paymentTenant.toLowerCase()))
+    );
+    if (!matchedDue) { Alert.alert('Not Found', 'No tenant found matching that name or ID. Use the tenant directory to record payments.'); return; }
+    setPaySubmitting(true);
+    try {
+      const now = new Date();
+      await recordPayment({
+        tenantId: matchedDue.tenant._id,
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        rentDue: matchedDue.rentDue,
+        amountPaid: amountNum,
+        paymentMode: 'cash',
+        paymentDate: now.toISOString(),
+        notes: paymentDescription.trim() || undefined,
+      });
+      await refetchPayments();
+      setShowAddPayment(false);
+      resetPaymentForm();
+      Alert.alert('Success', `Payment of ₹${amountNum.toLocaleString('en-IN')} recorded.`);
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to record payment. Please try again.');
+    } finally {
+      setPaySubmitting(false);
+    }
   };
 
   const ordinalSuffix = (n: number) => {
@@ -103,6 +176,19 @@ export default function LandlordDashboardScreen() {
     outputRange: [0, 100],
   });
 
+  // ── Real stats from API
+  const collectionReceived = stats?.collection?.totalCollected ?? 0;
+  const collectionTotal = stats?.collection?.totalDue ?? 1;
+  const collectionPct = stats?.collectionPct ?? 0;
+  const totalTenants = stats?.occupiedUnits ?? 0;
+  const occupiedUnits = stats?.occupiedUnits ?? 0;
+  const occupancyPct = stats?.occupancyPct ?? 0;
+  const totalUnits = stats?.totalUnits ?? 0;
+  const maintenanceOpen = stats?.openMaintenance ?? 0;
+  const totalProperties = stats?.totalProperties ?? 0;
+
+  // Today's date string for payment modal
+  const todayStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
     <View style={styles.container}>
@@ -115,15 +201,12 @@ export default function LandlordDashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={() => router.push('/profile')}>
-              <Image
-                source={{ uri: 'https://i.pravatar.cc/100?img=12' }}
-                style={styles.avatar}
-              />
+            <TouchableOpacity onPress={() => router.push('/profile')} style={styles.avatar}>
+              <Text style={styles.avatarInitials}>{initials}</Text>
             </TouchableOpacity>
             <View>
               <Text style={styles.welcomeText}>Welcome back,</Text>
-              <Text style={styles.userName}>Alex Thompson</Text>
+              <Text style={styles.userName}>{user?.name ?? 'Landlord'}</Text>
             </View>
           </View>
           <View style={styles.headerRight}>
@@ -133,25 +216,18 @@ export default function LandlordDashboardScreen() {
           </View>
         </View>
 
-        {/* Warning Banner */}
-        <View style={styles.warningBanner}>
-          <View style={styles.warningContent}>
-            <View style={styles.warningIconWrap}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#374151' }}>!</Text>
-            </View>
-            <Text style={styles.warningText}>Bank account not linked for 1 properties</Text>
-          </View>
-          <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkButtonText}>Link</Text>
-          </TouchableOpacity>
-        </View>
+
 
         {/* Overview */}
         <Text style={styles.sectionTitle}>Overview</Text>
 
         <View style={styles.overviewCardAnalytics}>
           <Text style={styles.analyticsLabel}>Total Properties</Text>
-          <Text style={styles.analyticsBigVal}>20</Text>
+          {statsLoading ? (
+            <ActivityIndicator size="small" color="#1601AA" style={{ marginTop: 4 }} />
+          ) : (
+            <Text style={styles.analyticsBigVal}>{totalProperties}</Text>
+          )}
         </View>
 
         {/* Stats Grid */}
@@ -167,7 +243,7 @@ export default function LandlordDashboardScreen() {
                 <View style={styles.statTitleLine} />
               </View>
             </View>
-            <Text style={styles.statValue}>85%</Text>
+            <Text style={styles.statValue}>{collectionPct}%</Text>
           </TouchableOpacity>
 
           {/* Tenant Hub */}
@@ -181,7 +257,7 @@ export default function LandlordDashboardScreen() {
                 <View style={styles.statTitleLine} />
               </View>
             </View>
-            <Text style={styles.statValue}>85%</Text>
+            <Text style={styles.statValue}>{occupancyPct}%</Text>
           </TouchableOpacity>
 
           {/* Units */}
@@ -195,7 +271,7 @@ export default function LandlordDashboardScreen() {
                 <View style={styles.statTitleLine} />
               </View>
             </View>
-            <Text style={styles.statValue}>92</Text>
+            <Text style={styles.statValue}>{totalUnits}</Text>
           </TouchableOpacity>
 
           {/* Maintenance */}
@@ -209,7 +285,7 @@ export default function LandlordDashboardScreen() {
                 <View style={styles.statTitleLine} />
               </View>
             </View>
-            <Text style={styles.statValue}>05</Text>
+            <Text style={styles.statValue}>{String(maintenanceOpen).padStart(2, '0')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -227,14 +303,14 @@ export default function LandlordDashboardScreen() {
             <View style={styles.dotWrap}><View style={[styles.dot, { backgroundColor: '#22C55E' }]} /></View>
             <Text style={styles.collectionLabel}>Received</Text>
             <View style={{ flex: 1 }} />
-            <Text style={[styles.collectionVal, { color: '#22C55E' }]}>₹18,000</Text>
+            <Text style={[styles.collectionVal, { color: '#22C55E' }]}>₹{collectionReceived.toLocaleString('en-IN')}</Text>
           </View>
 
           <View style={styles.collectionRow}>
             <View style={styles.dotWrap}><View style={[styles.dot, { backgroundColor: '#EF4444' }]} /></View>
             <Text style={styles.collectionLabel}>Pending</Text>
             <View style={{ flex: 1 }} />
-            <Text style={[styles.collectionVal, { color: '#EF4444' }]}>₹2,000</Text>
+            <Text style={[styles.collectionVal, { color: '#EF4444' }]}>₹{(collectionTotal - collectionReceived).toLocaleString('en-IN')}</Text>
           </View>
 
           <View style={styles.horizontalDottedLine} />
@@ -243,41 +319,42 @@ export default function LandlordDashboardScreen() {
             <View style={styles.dotWrap} />
             <Text style={styles.collectionLabel}>Total</Text>
             <View style={{ flex: 1 }} />
-            <Text style={styles.collectionValMain}>₹20,000</Text>
+            <Text style={styles.collectionValMain}>₹{collectionTotal.toLocaleString('en-IN')}</Text>
           </View>
         </View>
 
         {/* Action Required */}
         <Text style={styles.sectionTitle}>Action Required</Text>
 
-        <TouchableOpacity style={styles.actionCard}>
-          <View style={[styles.actionIconWrap, { backgroundColor: '#FEE2E2' }]}>
-            <Ionicons name="alert-circle" size={16} color="#DC2626" />
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Unit 5B: Rent Overdue</Text>
-            <Text style={styles.actionSub}>John Smith is 5 days late.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
-        </TouchableOpacity>
+        {overdueDues.map((due) => (
+          <TouchableOpacity
+            key={due.tenant._id}
+            style={styles.actionCard}
+            onPress={() => router.push('/dues-pending')}
+          >
+            <View style={[styles.actionIconWrap, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>
+                {due.unit ? `Unit ${due.unit.unitNumber}: ` : ''}Rent Overdue
+              </Text>
+              <Text style={styles.actionSub}>
+                {due.tenant.userId?.name ?? 'Tenant'} — ₹{due.balance.toLocaleString('en-IN')} pending
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+          </TouchableOpacity>
+        ))}
 
-        <TouchableOpacity style={styles.actionCard}>
-          <View style={[styles.actionIconWrap, { backgroundColor: '#FEF3C7' }]}>
-            <Ionicons name="time-outline" size={16} color="#D97706" />
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Lease Ending Soon</Text>
-            <Text style={styles.actionSub}>Unit 12A lease expires in 30 days.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
-        </TouchableOpacity>
-
-        {/* Dues Pending Banner */}
-        <TouchableOpacity style={styles.duesBanner} onPress={() => router.push('/dues-pending')}>
-          <Ionicons name="warning" size={20} color="#F59E0B" />
-          <Text style={styles.duesText}>Dues pending from <Text style={{ fontFamily: FontFamily.interBold, color: '#1F2937' }}>1 tenants</Text></Text>
-          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-        </TouchableOpacity>
+        {/* Dues Pending Banner — only show when there are actually overdue dues */}
+        {overdueDuesCount > 0 && (
+          <TouchableOpacity style={styles.duesBanner} onPress={() => router.push('/dues-pending')}>
+            <Ionicons name="warning" size={20} color="#F59E0B" />
+            <Text style={styles.duesText}>Dues pending from{' '}<Text style={{ fontFamily: FontFamily.interBold, color: '#1F2937' }}>{overdueDuesCount} tenant{overdueDuesCount !== 1 ? 's' : ''}</Text></Text>
+            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
 
         {/* Properties Overview */}
         <View style={styles.sectionHeader}>
@@ -286,22 +363,31 @@ export default function LandlordDashboardScreen() {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.propScrollContent}>
-          <TouchableOpacity onPress={() => router.push('/properties')} style={styles.propCard}>
-            <View style={styles.propImg} />
-            <View style={styles.propBadge}>
-              <Text style={styles.propBadgeText}>Occupied</Text>
+          {properties.length === 0 ? (
+            <View style={[styles.propCard, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ fontSize: 13, fontFamily: FontFamily.lato, color: '#9CA3AF' }}>No properties yet — tap + to add one</Text>
             </View>
-            <Text style={styles.propName}>Sunset Apartments</Text>
-            <Text style={styles.propAddr}>123 Ocean Drive, Miami</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/properties')} style={[styles.propCard, styles.propCardVacant]}>
-            <View style={[styles.propImg, { backgroundColor: '#E8E6FA' }]} />
-            <View style={[styles.propBadge, { backgroundColor: '#FEF3C7' }]}>
-              <Text style={[styles.propBadgeText, { color: '#D97706' }]}>Vacant</Text>
-            </View>
-            <Text style={styles.propName}>The Grand</Text>
-            <Text style={styles.propAddr}>456 Park Ave</Text>
-          </TouchableOpacity>
+          ) : (
+            properties.map((prop) => {
+              const isOccupied = (prop.occupiedCount ?? 0) > 0;
+              return (
+                <TouchableOpacity
+                  key={prop._id}
+                  onPress={() => router.push({ pathname: '/property-details', params: { id: prop._id } })}
+                  style={[styles.propCard, !isOccupied && styles.propCardVacant]}
+                >
+                  <View style={[styles.propImg, !isOccupied && { backgroundColor: '#E8E6FA' }]} />
+                  <View style={[styles.propBadge, !isOccupied && { backgroundColor: '#FEF3C7' }]}>
+                    <Text style={[styles.propBadgeText, !isOccupied && { color: '#D97706' }]}>
+                      {isOccupied ? 'Occupied' : 'Vacant'}
+                    </Text>
+                  </View>
+                  <Text style={styles.propName}>{prop.name}</Text>
+                  <Text style={styles.propAddr}>{prop.address}</Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </ScrollView>
 
 
@@ -501,8 +587,12 @@ export default function LandlordDashboardScreen() {
                 <Text style={styles.infoText}>Rent due on {ordinalSuffix(parseInt(rentCycle))} of every month</Text>
               </View>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={() => setShowAddProperty(false)}>
-                <Text style={styles.submitText}>Add Property</Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, propSubmitting && { opacity: 0.7 }]}
+                onPress={handleAddProperty}
+                disabled={propSubmitting}
+              >
+                <Text style={styles.submitText}>{propSubmitting ? 'Adding…' : 'Add Property'}</Text>
               </TouchableOpacity>
               <View style={{ height: 40 }} />
             </ScrollView>
@@ -527,14 +617,14 @@ export default function LandlordDashboardScreen() {
               <View style={styles.pmSummaryCard}>
                 <View style={styles.pmBillRow}>
                   <Text style={styles.pmBillLabel}>Total Amount</Text>
-                  <Text style={styles.pmBillAmount}>₹8,500</Text>
+                  <Text style={styles.pmBillAmount}>₹{paymentAmount ? Number(paymentAmount).toLocaleString('en-IN') : '0'}</Text>
                 </View>
                 <View style={styles.pmBillRow}>
                   <View style={styles.pmDeductionRow}>
                     <View style={styles.pmMinusCircle}><Text style={styles.pmMinusText}>−</Text></View>
                     <Text style={styles.pmBillLabel}>Amount Paid</Text>
                   </View>
-                  <Text style={styles.pmBillAmountPaid}>₹8,000</Text>
+                  <Text style={styles.pmBillAmountPaid}>₹{paymentAmount ? Number(paymentAmount).toLocaleString('en-IN') : '0'}</Text>
                 </View>
                 <View style={styles.pmDashedDivider} />
                 <View style={styles.pmBillRow}>
@@ -542,7 +632,7 @@ export default function LandlordDashboardScreen() {
                     <View style={styles.pmEqualsCircle}><Text style={styles.pmEqualsText}>=</Text></View>
                     <Text style={styles.pmDueLabel}>Due</Text>
                   </View>
-                  <Text style={styles.pmDueAmount}>₹500</Text>
+                  <Text style={styles.pmDueAmount}>₹0</Text>
                 </View>
               </View>
 
@@ -570,7 +660,7 @@ export default function LandlordDashboardScreen() {
               {/* Payment Date */}
               <Text style={styles.fieldLabel}>Payment date</Text>
               <View style={styles.pmDateRow}>
-                <Text style={styles.pmDateText}>Dec 21, 2025</Text>
+                <Text style={styles.pmDateText}>{todayStr}</Text>
                 <Ionicons name="calendar-outline" size={20} color="#6B7280" />
               </View>
               <View style={styles.pmUnderline} />
@@ -597,8 +687,12 @@ export default function LandlordDashboardScreen() {
               />
               <Text style={styles.pmCharCount}>{paymentDescription.length}/200</Text>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={() => setShowAddPayment(false)}>
-                <Text style={styles.submitText}>Save Payment</Text>
+              <TouchableOpacity
+                style={[styles.submitBtn, paySubmitting && { opacity: 0.7 }]}
+                onPress={handleAddPayment}
+                disabled={paySubmitting}
+              >
+                <Text style={styles.submitText}>{paySubmitting ? 'Saving…' : 'Save Payment'}</Text>
               </TouchableOpacity>
               <View style={{ height: 40 }} />
             </ScrollView>
@@ -635,8 +729,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#1601AA',
+  },
+  avatarInitials: {
+    fontSize: 18,
+    fontFamily: FontFamily.interBold,
+    color: '#1601AA',
   },
   welcomeText: {
     fontSize: 14,

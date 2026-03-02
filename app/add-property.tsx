@@ -3,6 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { addProperty, addUnit } from '@/services/property.service';
 
 const transactionTypes = ['Rent', 'Lease', 'Sale'];
 const propertyTypes = [
@@ -18,13 +21,16 @@ const propertyTypes = [
   { id: 'commercial', label: 'Commercial', icon: 'storefront-outline' },
 ];
 
-const apartmentConfigurations = ['1RK', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK+', 'Penthouse'];
+const UNIT_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '12', '15', '20'];
 
 export default function AddPropertyScreen() {
   const [selectedTransaction, setSelectedTransaction] = useState('Rent');
   const [selectedPropertyType, setSelectedPropertyType] = useState('apartment');
+  const [propertyName, setPropertyName] = useState('');
+  const [propertyAddress, setPropertyAddress] = useState('');
   const [unitConfig, setUnitConfig] = useState('2BHK');
   const [showUnitDropdown, setShowUnitDropdown] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Rent Cycle (Day of month)
   const [rentCycle, setRentCycle] = useState('1');
@@ -45,6 +51,50 @@ export default function AddPropertyScreen() {
       if (activeFloor > num) setActiveFloor(1);
     }
   };
+
+  const handleSubmit = async () => {
+    if (!propertyName.trim()) { Alert.alert('Missing Fields', 'Property name is required.'); return; }
+    if (!propertyAddress.trim()) { Alert.alert('Missing Fields', 'Property address is required.'); return; }
+    const numFloors = parseInt(totalFloors || '1', 10);
+    if (isNaN(numFloors) || numFloors < 1) { Alert.alert('Missing Fields', 'Enter a valid number of floors.'); return; }
+    setSubmitting(true);
+    try {
+      // Map type to backend expected values
+      const typeMap: Record<string, 'building' | 'floor' | 'pg'> = {
+        apartment: 'building', house: 'floor', commercial: 'pg',
+      };
+      const property = await addProperty({
+        name: propertyName.trim(),
+        address: propertyAddress.trim(),
+        type: typeMap[selectedPropertyType] ?? 'building',
+        totalFloors: numFloors,
+        rentCycle: parseInt(rentCycle, 10) || 1,
+      });
+      // Create units for each floor
+      const unitPromises: Promise<any>[] = [];
+      for (let f = 1; f <= numFloors; f++) {
+        const unitCount = parseInt(floorUnits[f] || '4', 10);
+        for (let u = 1; u <= unitCount; u++) {
+          unitPromises.push(addUnit(property._id, {
+            floorNumber: f,
+            unitNumber: String(u),
+            unitConfig,
+            rentAmount: 0,
+          }));
+        }
+      }
+      await Promise.all(unitPromises);
+      Alert.alert('Success', `${propertyName} has been added with ${numFloors} floor(s).`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message ?? 'Failed to add property. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const apartmentConfigurations = ['1RK', '1BHK', '2BHK', '3BHK', '4BHK', '5BHK+', 'Penthouse'];
 
   return (
     <View style={styles.container}>
@@ -85,13 +135,16 @@ export default function AddPropertyScreen() {
 
         {/* Property Name */}
         <View style={styles.section}>
-          <Text style={styles.label}>Property Name</Text>
+          <Text style={styles.label}>Property Name*</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g., Sunset Apartments"
             placeholderTextColor="#9CA3AF"
+            value={propertyName}
+            onChangeText={setPropertyName}
           />
         </View>
+
 
         {/* Property Type */}
         <View style={styles.section}>
@@ -174,8 +227,10 @@ export default function AddPropertyScreen() {
             <Ionicons name="location-outline" size={18} color="#6B7280" style={styles.addressIcon} />
             <TextInput
               style={styles.addressInput}
-              placeholder="Start typing your address..."
+              placeholder="Full property address"
               placeholderTextColor="#9CA3AF"
+              value={propertyAddress}
+              onChangeText={setPropertyAddress}
             />
           </View>
           <Text style={styles.helperText}>Address will be autocompleted.</Text>
@@ -296,28 +351,17 @@ export default function AddPropertyScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => router.push('/add-property')}>
-        <Ionicons name="add" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
-
-      {/* Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Ionicons name="grid" size={20} color="#1601AA" />
-          <Text style={[styles.tabText, styles.tabActive]}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/properties')}>
-          <Ionicons name="business-outline" size={20} color="#9CA3AF" />
-          <Text style={styles.tabText}>Properties</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/landlord-requests')}>
-          <Ionicons name="construct-outline" size={20} color="#9CA3AF" />
-          <Text style={styles.tabText}>Requests</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push('/help-support')}>
-          <Ionicons name="ellipsis-horizontal" size={20} color="#9CA3AF" />
-          <Text style={styles.tabText}>More</Text>
+      {/* Submit Footer */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          {submitting
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <Text style={styles.submitBtnText}>Add Property</Text>
+          }
         </TouchableOpacity>
       </View>
     </View>
@@ -513,36 +557,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // FAB
-  fab: {
-    position: 'absolute',
-    bottom: 88,
-    alignSelf: 'center',
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#1601AA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#1601AA',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-
-  // Tab Bar
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingBottom: 22,
-    paddingTop: 8,
-  },
-  tabItem: { flex: 1, alignItems: 'center' },
-  tabText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
-  tabActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold },
+  // Footer Submit
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', padding: 16, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
+  submitBtn: { backgroundColor: '#1601AA', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', minHeight: 52 },
+  submitBtnText: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#FFFFFF' },
 
   // New Styles
   inputContainer: { marginBottom: 16 },

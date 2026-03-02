@@ -9,13 +9,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function AccountSuccessScreen() {
+  const { user } = useAuth();
+
   const handleFinish = () => {
-    // Navigate to main app / dashboard, resetting the stack
-    router.replace('/(tabs)');
+    if (user?.role === 'landlord') {
+      router.replace('/landlord-dashboard');
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (

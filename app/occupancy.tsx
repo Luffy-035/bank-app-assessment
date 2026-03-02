@@ -1,8 +1,9 @@
 import { FontFamily } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -11,51 +12,35 @@ import {
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { getDashboardStats } from '@/services/dashboard.service';
 
 const { width } = Dimensions.get('window');
 
-const tabs = [
-  { id: 'property', label: 'Property', icon: 'business' },
-  { id: 'city', label: 'City', icon: 'location' },
-  { id: 'unit', label: 'Unit Type', icon: 'home' },
-];
 
-const tabData = {
-  property: {
-    title: 'Property',
-    inventory: { vacant: 4, occupied: 39, total: 43, percent: 9 },
-    expenses: [
-      { label: 'Maintenance', amount: 4200, color: '#1601AA', width: '100%' },
-      { label: 'Utilities', amount: 2800, color: '#1601AA', width: '67%' },
-      { label: 'Insurance', amount: 1500, color: '#1601AA', width: '36%' },
-      { label: 'Staff', amount: 3200, color: '#9CA3AF', width: '76%' },
-      { label: 'Other', amount: 800, color: '#1601AA', width: '19%' },
-    ],
-  },
-  city: {
-    title: 'City',
-    inventory: { vacant: 120, occupied: 850, total: 970, percent: 12 },
-    expenses: [
-      { label: 'Taxes', amount: 15000, color: '#1601AA', width: '90%' },
-      { label: 'Services', amount: 8400, color: '#1601AA', width: '50%' },
-      { label: 'Permits', amount: 3200, color: '#1601AA', width: '20%' },
-      { label: 'Marketing', amount: 5000, color: '#9CA3AF', width: '30%' },
-    ],
-  },
-  unit: {
-    title: 'Unit Type',
-    inventory: { vacant: 2, occupied: 18, total: 20, percent: 10 },
-    expenses: [
-      { label: 'Renovation', amount: 2000, color: '#1601AA', width: '80%' },
-      { label: 'Cleaning', amount: 800, color: '#1601AA', width: '32%' },
-      { label: 'Appliances', amount: 1200, color: '#9CA3AF', width: '50%' },
-    ],
-  }
-};
+
+
+
 
 export default function OccupancyScreen() {
-  const [activeTab, setActiveTab] = useState<'property' | 'city' | 'unit'>('property');
-  const currentData = tabData[activeTab];
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [realStats, setRealStats] = useState({ occupiedUnits: 0, totalUnits: 0, occupancyPct: 0 });
+
+  useEffect(() => {
+    getDashboardStats()
+      .then((s) => setRealStats({ occupiedUnits: s.occupiedUnits, totalUnits: s.totalUnits, occupancyPct: Math.round(s.occupancyPct) }))
+      .catch(() => { })
+      .finally(() => setStatsLoading(false));
+  }, []);
+
+  // Property tab uses real stats from getDashboardStats
+  const currentData = {
+    inventory: {
+      vacant: realStats.totalUnits - realStats.occupiedUnits,
+      occupied: realStats.occupiedUnits,
+      total: realStats.totalUnits,
+      percent: realStats.occupancyPct,
+    },
+  };
 
   const getArcPath = (percentage: number) => {
     const radius = 60;
@@ -85,24 +70,12 @@ export default function OccupancyScreen() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Tabs */}
+        {/* Tab Row - single property tab */}
         <View style={styles.tabsRow}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
-              onPress={() => setActiveTab(tab.id as 'property' | 'city' | 'unit')}
-            >
-              <Ionicons
-                name={tab.icon as any}
-                size={16}
-                color={activeTab === tab.id ? '#FFFFFF' : '#6B7280'}
-              />
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <View style={[styles.tab, styles.tabActive]}>
+            <Ionicons name="business" size={16} color="#FFFFFF" />
+            <Text style={[styles.tabText, styles.tabTextActive]}>Property</Text>
+          </View>
         </View>
 
         {/* Analytics Overview */}

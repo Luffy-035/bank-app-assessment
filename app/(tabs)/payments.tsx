@@ -3,292 +3,156 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { usePayments } from '@/hooks/usePayments';
 
-type FilterType = 'All' | 'Paid' | 'Due' | 'Over Due';
-type PaymentStatus = 'Paid' | 'Due' | 'Over Due';
-
-interface Payment {
-  id: string;
-  month: string;
-  year: string;
-  paidOn?: string;
-  status: PaymentStatus;
-  amountPaid?: string;
-  amountDue?: string;
-  totalBill: string;
-  lateFee?: string;
-  unitsConsumed: string;
-  paymentMethod?: string;
-  statusText?: string;
-}
-
-const payments: Payment[] = [
-  {
-    id: '1',
-    month: 'October',
-    year: '2025',
-    paidOn: '05 Oct 2025',
-    status: 'Paid',
-    amountPaid: '₹8,500.00',
-    totalBill: '₹8,500.00',
-    unitsConsumed: '125 kWh',
-    paymentMethod: 'UPI',
-  },
-  {
-    id: '2',
-    month: 'September',
-    year: '2025',
-    paidOn: '12 Sep 2025',
-    status: 'Due',
-    amountPaid: '₹8,750.00',
-    totalBill: '₹8,600.00',
-    lateFee: '+₹150 late fee',
-    unitsConsumed: '142 kWh',
-    paymentMethod: 'Credit Card',
-  },
-  {
-    id: '3',
-    month: 'August',
-    year: '2025',
-    status: 'Over Due',
-    amountDue: '₹8,420.00',
-    totalBill: '₹8,420.00',
-    unitsConsumed: '118 kWh',
-    statusText: 'Outstanding Balance',
-  },
-  {
-    id: '4',
-    month: 'July',
-    year: '2025',
-    paidOn: '03 Jul 2025',
-    status: 'Paid',
-    amountPaid: '₹8,350.00',
-    totalBill: '₹8,350.00',
-    unitsConsumed: '110 kWh',
-    paymentMethod: 'Wallet',
-  },
-];
+type FilterType = 'All' | 'Paid' | 'Partial' | 'Pending';
+type DisplayStatus = 'Paid' | 'Partial' | 'Pending';
 
 export default function PaymentsScreen() {
+  const { payments: raw, loading } = usePayments();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
-  const filters: FilterType[] = ['All', "Over Due", 'Due', 'Paid',];
+  const filters: FilterType[] = ['All', 'Paid', 'Partial', 'Pending'];
 
-  const filteredPayments = payments.filter((payment) => {
-    if (activeFilter === 'All') return true;
-    return payment.status === activeFilter;
+  // Convert backend Payment to display format
+  const payments = raw.map((p) => {
+    const monthName = new Date(p.year, p.month - 1).toLocaleString('default', { month: 'long' });
+    const yearStr = String(p.year);
+    const displayStatus: DisplayStatus = p.status === 'paid' ? 'Paid' : p.status === 'partial' ? 'Partial' : 'Pending';
+    const totalBill = `₹${p.rentDue.toLocaleString('en-IN')}`;
+    const amountPaid = `₹${p.amountPaid.toLocaleString('en-IN')}`;
+    const balance = `₹${p.balance.toLocaleString('en-IN')}`;
+    const paidOn = p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : undefined;
+    return { id: p._id, month: monthName, year: yearStr, paidOn, status: displayStatus, amountPaid, totalBill, balance, paymentMethod: p.paymentMode };
   });
 
-  const getStatusColors = (status: PaymentStatus) => {
+  const filteredPayments = payments.filter((p) => activeFilter === 'All' || p.status === activeFilter);
+
+  const getStatusColors = (status: DisplayStatus) => {
     switch (status) {
-      case 'Paid':
-        return { bg: '#DCFCE7', color: '#22C55E', icon: 'checkmark-circle' as const };
-      case 'Due':
-        return { bg: '#FEF3C7', color: '#F59E0B', icon: 'time' as const };
-      case 'Over Due':
-        return { bg: '#FEE2E2', color: '#EF4444', icon: 'close-circle' as const };
+      case 'Paid': return { bg: '#DCFCE7', color: '#22C55E', icon: 'checkmark-circle' as const };
+      case 'Partial': return { bg: '#FEF3C7', color: '#F59E0B', icon: 'time' as const };
+      case 'Pending': return { bg: '#FEE2E2', color: '#EF4444', icon: 'close-circle' as const };
     }
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Gradient Header */}
-        <LinearGradient
-          colors={['#1601AA', '#2D1B69']}
-          style={styles.gradientHeader}
-        >
-          {/* Header Row */}
+        <LinearGradient colors={['#1601AA', '#2D1B69']} style={styles.gradientHeader}>
           <View style={styles.headerRow}>
-            <TouchableOpacity>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+            <TouchableOpacity><Ionicons name="arrow-back" size={24} color="#FFFFFF" /></TouchableOpacity>
             <Text style={styles.headerTitle}>Payments</Text>
             <View style={{ width: 24 }} />
           </View>
-
-          {/* White Security Card */}
           <View style={styles.securityCard}>
             <View style={styles.securityTop}>
-              {/* Shield Icon */}
-              <View style={styles.shieldCircle}>
-                <Ionicons name="shield-checkmark" size={28} color="#FFFFFF" />
-              </View>
-
-              {/* Text Content */}
+              <View style={styles.shieldCircle}><Ionicons name="shield-checkmark" size={28} color="#FFFFFF" /></View>
               <View style={styles.securityTextArea}>
                 <Text style={styles.securityMainText}>Bank-Level Security</Text>
                 <View style={styles.securitySubRow}>
-                  <Text style={styles.securitySubText}>
-                    Your data is encrypted & secure
-                  </Text>
+                  <Text style={styles.securitySubText}>Your data is encrypted &amp; secure</Text>
                   <Text style={styles.verifiedLabel}>Verified</Text>
                 </View>
               </View>
             </View>
-
-            {/* Divider */}
             <View style={styles.divider} />
-
-            {/* Badges Row */}
             <View style={styles.badgesContainer}>
-              <View style={styles.singleBadge}>
-                <Ionicons name="lock-closed" size={16} color="#D97706" />
-                <Text style={styles.badgeLabel}>256-bit SSL</Text>
-              </View>
-              <View style={styles.singleBadge}>
-                <Ionicons name="checkmark-circle" size={16} color="#1601AA" />
-                <Text style={styles.badgeLabel}>PCI Compliant</Text>
-              </View>
-              <View style={styles.singleBadge}>
-                <Ionicons name="eye-off" size={16} color="#9CA3AF" />
-                <Text style={styles.badgeLabel}>Zero Storage</Text>
-              </View>
+              <View style={styles.singleBadge}><Ionicons name="lock-closed" size={16} color="#D97706" /><Text style={styles.badgeLabel}>256-bit SSL</Text></View>
+              <View style={styles.singleBadge}><Ionicons name="checkmark-circle" size={16} color="#1601AA" /><Text style={styles.badgeLabel}>PCI Compliant</Text></View>
+              <View style={styles.singleBadge}><Ionicons name="eye-off" size={16} color="#9CA3AF" /><Text style={styles.badgeLabel}>Zero Storage</Text></View>
             </View>
           </View>
         </LinearGradient>
 
         {/* Filter Pills */}
         <View style={styles.filtersContainer}>
-          {filters.map((filter) => {
-            const isActive = activeFilter === filter;
-            return (
-              <TouchableOpacity
-                key={filter}
-                style={[styles.filterPill, isActive && styles.filterPillActive]}
-                onPress={() => setActiveFilter(filter)}
-              >
-                <Text style={[styles.filterLabel, isActive && styles.filterLabelActive]}>
-                  {filter}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          {filters.map((filter) => (
+            <TouchableOpacity key={filter} style={[styles.filterPill, activeFilter === filter && styles.filterPillActive]} onPress={() => setActiveFilter(filter)}>
+              <Text style={[styles.filterLabel, activeFilter === filter && styles.filterLabelActive]}>{filter}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Payment Cards List */}
         <View style={styles.cardsContainer}>
-          {filteredPayments.map((payment) => {
+          {loading ? (
+            <ActivityIndicator size="large" color="#1601AA" style={{ marginTop: 32 }} />
+          ) : filteredPayments.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <Ionicons name="receipt-outline" size={40} color="#D1D5DB" />
+              <Text style={{ color: '#9CA3AF', marginTop: 10, fontFamily: FontFamily.lato }}>No payment records found.</Text>
+            </View>
+          ) : filteredPayments.map((payment) => {
             const statusColors = getStatusColors(payment.status);
             const isPaid = payment.status === 'Paid';
-            const isOverDue = payment.status === 'Over Due';
-
+            const isPending = payment.status === 'Pending';
             return (
               <View key={payment.id} style={styles.paymentCard}>
-                {/* Card Inner Content */}
                 <View style={styles.cardInner}>
-                  {/* Top: Month/Year + Status */}
                   <View style={styles.cardTopRow}>
                     <View>
-                      <Text style={styles.monthYearText}>
-                        {payment.month} {payment.year}
-                      </Text>
+                      <Text style={styles.monthYearText}>{payment.month} {payment.year}</Text>
                       <Text style={styles.paidOnLabel}>
-                        {isOverDue ? 'Payment missed' : `Paid on: ${payment.paidOn}`}
+                        {isPending ? 'Payment pending' : `Paid on: ${payment.paidOn}`}
                       </Text>
                     </View>
-
-                    {/* Status Badge */}
                     <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
                       <Ionicons name={statusColors.icon} size={12} color={statusColors.color} />
-                      <Text style={[styles.statusText, { color: statusColors.color }]}>
-                        {payment.status}
-                      </Text>
+                      <Text style={[styles.statusText, { color: statusColors.color }]}>{payment.status}</Text>
                     </View>
                   </View>
 
-                  {/* Bill Breakdown Section */}
                   <View style={styles.billBreakdown}>
-                    {/* Total Rent */}
                     <View style={styles.billLine}>
                       <View style={styles.billLabelRow}>
-                        <View style={[styles.billIcon, { backgroundColor: '#E0E7FF' }]}>
-                          <Ionicons name="home-outline" size={14} color="#1601AA" />
-                        </View>
+                        <View style={[styles.billIcon, { backgroundColor: '#E0E7FF' }]}><Ionicons name="home-outline" size={14} color="#1601AA" /></View>
                         <Text style={styles.billLineLabel}>Total Rent</Text>
                       </View>
                       <Text style={styles.billLineAmount}>{payment.totalBill}</Text>
                     </View>
-
-                    {/* Rent Paid with minus indicator after */}
                     <View style={styles.billLine}>
                       <View style={styles.billLabelRow}>
-                        <View style={[styles.billIcon, { backgroundColor: '#DCFCE7' }]}>
-                          <Ionicons name="checkmark-outline" size={14} color="#22C55E" />
-                        </View>
+                        <View style={[styles.billIcon, { backgroundColor: '#DCFCE7' }]}><Ionicons name="checkmark-outline" size={14} color="#22C55E" /></View>
                         <Text style={styles.billLineLabel}>Rent Paid</Text>
                         <Text style={styles.minusSign}>−</Text>
                       </View>
-                      <Text style={styles.billLineAmount}>{payment.amountPaid || '₹0'}</Text>
+                      <Text style={styles.billLineAmount}>{payment.amountPaid}</Text>
                     </View>
-
-                    {/* Dashed Divider */}
                     <View style={styles.dashedLine} />
-
-                    {/* Balance */}
                     <View style={styles.balanceRow}>
                       <Text style={styles.balanceLabel}>Balance:</Text>
-                      <Text style={[
-                        styles.balanceAmount,
-                        isOverDue && { color: '#EF4444' }
-                      ]}>
-                        {isOverDue ? payment.amountDue : '₹0'}
-                      </Text>
+                      <Text style={[styles.balanceAmount, isPending && { color: '#EF4444' }]}>{payment.balance}</Text>
                     </View>
                   </View>
 
-                  {/* Info Boxes Row */}
                   <View style={styles.infoBoxRow}>
-                    <View style={styles.infoBoxItem}>
-                      <Ionicons name="flash-outline" size={16} color="#F59E0B" />
-                      <View style={styles.infoBoxText}>
-                        <Text style={styles.infoBoxLabel}>Units Consumed</Text>
-                        <Text style={styles.infoBoxValue}>{payment.unitsConsumed}</Text>
-                      </View>
-                    </View>
                     <View style={styles.infoBoxItem}>
                       <Ionicons name="card-outline" size={16} color="#1601AA" />
                       <View style={styles.infoBoxText}>
                         <Text style={styles.infoBoxLabel}>Payment Method</Text>
-                        <Text style={styles.infoBoxValue}>
-                          {payment.statusText || payment.paymentMethod}
-                        </Text>
+                        <Text style={styles.infoBoxValue}>{payment.paymentMethod ?? '—'}</Text>
                       </View>
                     </View>
                   </View>
 
-                  {/* Action Button */}
-                  <TouchableOpacity style={[
-                    styles.actionButton,
-                    isPaid ? styles.actionButtonOutline : styles.actionButtonFilled
-                  ]}>
-                    <Text style={[
-                      styles.actionText,
-                      !isPaid && { color: '#FFFFFF' }
-                    ]}>
-                      {isPaid ? 'View Receipt' : 'Pay Now'}
-                    </Text>
-                    <Ionicons
-                      name={isPaid ? "document-text-outline" : "arrow-forward"}
-                      size={16}
-                      color={isPaid ? "#1601AA" : "#FFFFFF"}
-                    />
+                  <TouchableOpacity style={[styles.actionButton, isPaid ? styles.actionButtonOutline : styles.actionButtonFilled]}>
+                    <Text style={[styles.actionText, !isPaid && { color: '#FFFFFF' }]}>{isPaid ? 'View Receipt' : 'Pay Now'}</Text>
+                    <Ionicons name={isPaid ? 'document-text-outline' : 'arrow-forward'} size={16} color={isPaid ? '#1601AA' : '#FFFFFF'} />
                   </TouchableOpacity>
                 </View>
               </View>
             );
           })}
         </View>
-
         <View style={{ height: 80 }} />
       </ScrollView>
     </View>

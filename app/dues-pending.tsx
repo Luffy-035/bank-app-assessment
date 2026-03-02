@@ -3,7 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
+    Linking,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -11,73 +13,60 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-
-const DUES_DATA = [
-    {
-        id: '1',
-        room: 'Unit 5B',
-        tenantName: 'John Smith',
-        amountDue: '₹2,000',
-        daysOverdue: 5,
-        phone: '+91 98765 43210',
-    },
-    {
-        id: '2',
-        room: 'Unit 3A',
-        tenantName: 'Priya Sharma',
-        amountDue: '₹3,500',
-        daysOverdue: 12,
-        phone: '+91 91234 56789',
-    },
-    {
-        id: '3',
-        room: 'Unit 8C',
-        tenantName: 'Ravi Mehta',
-        amountDue: '₹1,200',
-        daysOverdue: 2,
-        phone: '+91 99988 77665',
-    },
-];
+import { usePayments } from '@/hooks/usePayments';
 
 export default function DuesPendingScreen() {
+    const { dues, loading } = usePayments();
     const [remindedIds, setRemindedIds] = useState<string[]>([]);
 
-    const sendReminder = (tenant: typeof DUES_DATA[0]) => {
-        if (remindedIds.includes(tenant.id)) {
-            Alert.alert('Already Sent', `A reminder has already been sent to ${tenant.tenantName}.`);
+    const sendReminder = (tenantId: string, tenantName: string, unit: string, amount: string, phone?: string) => {
+        if (remindedIds.includes(tenantId)) {
+            Alert.alert('Already Noted', `You have already noted a reminder for ${tenantName}.`);
             return;
         }
+        const actions: any[] = [
+            { text: 'Dismiss', style: 'cancel' },
+            {
+                text: 'Mark Reminded',
+                onPress: () => setRemindedIds((prev) => [...prev, tenantId]),
+            },
+        ];
+        if (phone) {
+            actions.unshift({
+                text: `Call ${tenantName}`,
+                onPress: () => Linking.openURL(`tel:${phone}`),
+            });
+        }
         Alert.alert(
-            'Reminder Sent',
-            `A payment reminder has been sent to ${tenant.tenantName} (${tenant.room}).\n\nMessage: "Your landlord has requested you to complete your pending payment of ${tenant.amountDue}."`,
-            [{ text: 'OK' }]
+            'Send Reminder',
+            `Remind ${tenantName} (${unit}) about their pending payment of ${amount}.\n\nNote: In-app push notifications are coming soon. You can call the tenant directly now.`,
+            actions
         );
-        setRemindedIds((prev) => [...prev, tenant.id]);
     };
 
     const sendAllReminders = () => {
-        const unreminded = DUES_DATA.filter((t) => !remindedIds.includes(t.id));
+        const unreminded = dues.filter((d) => !remindedIds.includes(d.tenant._id));
         if (unreminded.length === 0) {
-            Alert.alert('All Done', 'Reminders have already been sent to all tenants.');
+            Alert.alert('All Done', 'You have already noted reminders for all tenants.');
             return;
         }
         Alert.alert(
-            'Send All Reminders',
-            `Send payment reminders to all ${unreminded.length} tenants with pending dues?`,
+            'Note All Reminders',
+            `Mark all ${unreminded.length} tenants as reminded? Push notifications are coming soon — use individual Call buttons to contact tenants directly.`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Send All',
+                    text: 'Mark All',
                     onPress: () => {
-                        setRemindedIds(DUES_DATA.map((t) => t.id));
-                        Alert.alert('Done', 'Reminders sent to all tenants with pending dues.');
+                        setRemindedIds(dues.map((d) => d.tenant._id));
                     },
                 },
             ]
         );
     };
 
-    const totalDue = '₹6,700';
+    const totalPending = dues.reduce((sum, d) => sum + d.balance, 0);
+    const totalDue = `₹${totalPending.toLocaleString('en-IN')}`;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -96,7 +85,7 @@ export default function DuesPendingScreen() {
             {/* Summary Banner */}
             <View style={styles.summaryBanner}>
                 <View>
-                    <Text style={styles.summaryLabel}>{DUES_DATA.length} Tenants with Dues</Text>
+                    <Text style={styles.summaryLabel}>{dues.length} Tenants with Dues</Text>
                     <Text style={styles.summaryAmount}>{totalDue} Total Pending</Text>
                 </View>
                 <View style={styles.summaryIcon}>
@@ -105,34 +94,47 @@ export default function DuesPendingScreen() {
             </View>
 
             <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {DUES_DATA.map((tenant) => {
-                    const reminded = remindedIds.includes(tenant.id);
+                {loading ? (
+                    <ActivityIndicator size="large" color="#1601AA" style={{ marginTop: 40 }} />
+                ) : dues.length === 0 ? (
+                    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                        <Ionicons name="checkmark-circle-outline" size={48} color="#D1D5DB" />
+                        <Text style={{ color: '#9CA3AF', marginTop: 12, fontFamily: FontFamily.lato }}>
+                            No pending dues.
+                        </Text>
+                    </View>
+                ) : dues.map((d) => {
+                    const tenantId = d.tenant._id;
+                    const reminded = remindedIds.includes(tenantId);
+                    const nameStr = (d.tenant as any)?.userId?.name ?? 'Tenant';
+                    const unitStr = (d.unit as any)?.unitNumber ?? 'Unit';
+                    const amountStr = `₹${d.balance.toLocaleString('en-IN')}`;
                     return (
-                        <View key={tenant.id} style={styles.tenantCard}>
+                        <View key={tenantId} style={styles.tenantCard}>
                             {/* Left: Avatar + Info */}
                             <View style={styles.cardLeft}>
                                 <View style={styles.avatar}>
-                                    <Text style={styles.avatarText}>{tenant.tenantName[0]}</Text>
+                                    <Text style={styles.avatarText}>{nameStr[0]?.toUpperCase() ?? '?'}</Text>
                                 </View>
                                 <View style={styles.info}>
-                                    <Text style={styles.tenantName}>{tenant.tenantName}</Text>
+                                    <Text style={styles.tenantName}>{nameStr}</Text>
                                     <View style={styles.roomRow}>
                                         <Ionicons name="bed-outline" size={13} color="#6B7280" />
-                                        <Text style={styles.roomText}>{tenant.room}</Text>
+                                        <Text style={styles.roomText}>{unitStr}</Text>
                                     </View>
                                     <View style={styles.overdueRow}>
                                         <Ionicons name="time-outline" size={12} color="#EF4444" />
-                                        <Text style={styles.overdueText}>{tenant.daysOverdue} days overdue</Text>
+                                        <Text style={styles.overdueText}>₹{d.amountPaid.toLocaleString('en-IN')} paid of ₹{d.rentDue.toLocaleString('en-IN')}</Text>
                                     </View>
                                 </View>
                             </View>
 
                             {/* Right: Amount + Remind Button */}
                             <View style={styles.cardRight}>
-                                <Text style={styles.amount}>{tenant.amountDue}</Text>
+                                <Text style={styles.amount}>{amountStr}</Text>
                                 <TouchableOpacity
                                     style={[styles.remindBtn, reminded && styles.remindBtnSent]}
-                                    onPress={() => sendReminder(tenant)}
+                                    onPress={() => sendReminder(tenantId, nameStr, unitStr, amountStr, (d.tenant as any)?.userId?.phone)}
                                     activeOpacity={0.75}
                                 >
                                     <Ionicons
@@ -153,7 +155,7 @@ export default function DuesPendingScreen() {
                 <View style={styles.infoBox}>
                     <Ionicons name="information-circle-outline" size={16} color="#6B7280" />
                     <Text style={styles.infoText}>
-                        Tapping <Text style={{ fontFamily: FontFamily.latoBold }}>Remind</Text> sends a payment request message to the tenant. Tap the 🔔 bell icon at the top to remind all tenants at once.
+                        Tap <Text style={{ fontFamily: FontFamily.latoBold }}>Remind</Text> to call or note a reminder for the tenant. Tap the 🔔 icon at the top to mark all as reminded. Push notifications will be available in a future update.
                     </Text>
                 </View>
 

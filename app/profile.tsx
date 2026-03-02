@@ -1,349 +1,154 @@
 import { FontFamily } from '@/constants/theme';
-import { Ionicons, MaterialCommunityIcons, SimpleLineIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
-const transactions = [
+const MENU_ITEMS = [
     {
-        id: '1',
-        name: 'Wings Tower',
-        date: 'November 21, 2021',
-        type: 'Rent',
-        liked: true,
+        group: 'Account',
+        items: [
+            { icon: 'person-outline' as const, label: 'Edit Profile', onPress: () => Alert.alert('Coming Soon', 'Profile editing will be available soon.') },
+            { icon: 'notifications-outline' as const, label: 'Notifications', onPress: () => Alert.alert('Coming Soon', 'Notification settings will be available soon.') },
+            { icon: 'shield-outline' as const, label: 'Privacy & Security', onPress: () => Alert.alert('Coming Soon', 'Privacy settings will be available soon.') },
+        ],
     },
     {
-        id: '2',
-        name: 'Bridgeland Modern House',
-        date: 'December 17, 2021',
-        type: 'Rent',
-        liked: true,
+        group: 'App',
+        items: [
+            { icon: 'help-circle-outline' as const, label: 'Help & Support', onPress: (router: any) => router.push('/help-support') },
+            { icon: 'document-text-outline' as const, label: 'Terms of Service', onPress: () => Alert.alert('Coming Soon', 'Terms of Service will be available soon.') },
+        ],
     },
 ];
 
-export default function ProfileScreen() {
+export default function LandlordProfileScreen() {
+    const { user, logout } = useAuth();
+
+    const initials = (user?.name ?? 'L').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+    const handleLogout = async () => {
+        Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Sign Out',
+                style: 'destructive',
+                onPress: async () => {
+                    await logout();
+                    router.replace('/login');
+                },
+            },
+        ]);
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="arrow-back" size={24} color="#111827" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Profile</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
-                {/* Avatar Section */}
-                <View style={styles.profileSection}>
-                    <View style={styles.avatarContainer}>
-                        <Image
-                            source={{ uri: 'https://i.pravatar.cc/100?img=12' }}
-                            style={styles.avatarImage}
-                        />
-                        <TouchableOpacity style={styles.editBtn}>
-                            <Ionicons name="pencil" size={14} color="#FFFFFF" />
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={styles.userName}>Alex Thompson</Text>
-                    <Text style={styles.userEmail}>mathew@email.com</Text>
-                </View>
-
-                {/* Stats Row */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>30</Text>
-                        <Text style={styles.statLabel}>Units</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>28</Text>
-                        <Text style={styles.statLabel}>Reviews</Text>
-                    </View>
-                </View>
-
-                {/* Tabs */}
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-                        <Text style={[styles.tabText, styles.tabTextActive]}>Transaction</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.tab}>
-                        <Text style={styles.tabText}>Vacant Units</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.tab}>
-                        <Text style={styles.tabText}>Tenants</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Transactions Header */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>2 transactions</Text>
-                    <TouchableOpacity style={styles.gridBtn}>
-                        <Ionicons name="grid" size={16} color="#4B5563" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Transactions List */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.transList}>
-                    {transactions.map((item) => (
-                        <View key={item.id} style={styles.transCard}>
-                            <View style={styles.transImgPlaceholder}>
-                                <TouchableOpacity style={styles.likeBtn}>
-                                    <Ionicons name={item.liked ? "heart" : "heart-outline"} size={14} color={item.liked ? "#6B7280" : "#6B7280"} />
-                                </TouchableOpacity>
-                                <View style={styles.rentBadge}>
-                                    <Text style={styles.rentBadgeText}>{item.type}</Text>
-                                </View>
-                            </View>
-                            <View style={styles.transInfo}>
-                                <Text style={styles.transName}>{item.name}</Text>
-                                <View style={styles.transDateRow}>
-                                    <View style={styles.dot} />
-                                    <Text style={styles.transDate}>{item.date}</Text>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
-                </ScrollView>
-
-                {/* Account Settings */}
-                <Text style={styles.groupTitle}>Account</Text>
-                <View style={styles.settingsGroup}>
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#EEF2FF' }]}>
-                            <Ionicons name="person" size={18} color="#4F46E5" />
-                        </View>
-                        <Text style={styles.settingLabel}>Account Details</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#ECFDF5' }]}>
-                            <Ionicons name="card" size={18} color="#10B981" />
-                        </View>
-                        <Text style={styles.settingLabel}>Payment Methods</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#FEF2F2' }]}>
-                            <SimpleLineIcons name="shield" size={18} color="#EF4444" />
-                        </View>
-                        <Text style={styles.settingLabel}>Security</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Preferences */}
-                <Text style={styles.groupTitle}>Preferences</Text>
-                <View style={styles.settingsGroup}>
-
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#FFFBEB' }]}>
-                            <Ionicons name="notifications" size={18} color="#F59E0B" />
-                        </View>
-                        <Text style={styles.settingLabel}>Notification Preferences</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#EFF6FF' }]}>
-                            <MaterialCommunityIcons name="translate" size={18} color="#3B82F6" />
-                        </View>
-                        <Text style={styles.settingLabel}>Language</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.settingItem}>
-                        <View style={[styles.settingIcon, { backgroundColor: '#F3F4F6' }]}>
-                            <Ionicons name="help-circle" size={18} color="#4B5563" />
-                        </View>
-                        <Text style={styles.settingLabel}>Help & Support</Text>
-                        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Logout */}
-                <TouchableOpacity style={styles.logoutBtn}>
-                    <Text style={styles.logoutText}>Log Out</Text>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                    <Ionicons name="arrow-back" size={22} color="#111827" />
                 </TouchableOpacity>
-
-                <View style={{ height: 100 }} />
-
-            </ScrollView>
-
-            {/* Tab Bar */}
-            <View style={styles.bottomTabBar}>
-                <TouchableOpacity style={styles.bottomTabItem} onPress={() => router.push('/landlord-dashboard')}>
-                    <Ionicons name="grid-outline" size={20} color="#9CA3AF" />
-                    <Text style={styles.bottomTabText}>Dashboard</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomTabItem} onPress={() => router.push('/properties')}>
-                    <Ionicons name="business-outline" size={20} color="#9CA3AF" />
-                    <Text style={styles.bottomTabText}>Properties</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomTabItem} onPress={() => router.push('/landlord-requests')}>
-                    <Ionicons name="construct-outline" size={20} color="#9CA3AF" />
-                    <Text style={styles.bottomTabText}>Requests</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomTabItem}>
-                    <Ionicons name="ellipsis-horizontal" size={20} color="#1601AA" />
-                    <Text style={[styles.bottomTabText, styles.bottomTabActive]}>More</Text>
-                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Profile</Text>
+                <View style={{ width: 36 }} />
             </View>
 
+            <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Avatar Section */}
+                <View style={styles.avatarSection}>
+                    <View style={styles.avatarCircle}>
+                        <Text style={styles.avatarText}>{initials}</Text>
+                    </View>
+                    <Text style={styles.userName}>{user?.name ?? 'Landlord'}</Text>
+                    <Text style={styles.userEmail}>{user?.email ?? user?.phone ?? ''}</Text>
+                    <View style={styles.roleBadge}>
+                        <Ionicons name="business-outline" size={12} color="#1601AA" />
+                        <Text style={styles.roleBadgeText}>Landlord</Text>
+                    </View>
+                </View>
+
+                {/* Info Cards */}
+                <View style={styles.infoCard}>
+                    {[
+                        { icon: 'mail-outline' as const, label: 'Email', value: user?.email || '—' },
+                        { icon: 'call-outline' as const, label: 'Phone', value: user?.phone || '—' },
+                    ].map((info, i, arr) => (
+                        <View key={info.label}>
+                            <View style={styles.infoRow}>
+                                <View style={styles.infoIconWrap}>
+                                    <Ionicons name={info.icon} size={16} color="#1601AA" />
+                                </View>
+                                <View>
+                                    <Text style={styles.infoLabel}>{info.label}</Text>
+                                    <Text style={styles.infoValue}>{info.value}</Text>
+                                </View>
+                            </View>
+                            {i < arr.length - 1 && <View style={styles.divider} />}
+                        </View>
+                    ))}
+                </View>
+
+                {/* Menu Groups */}
+                {MENU_ITEMS.map((group) => (
+                    <View key={group.group} style={styles.menuGroup}>
+                        <Text style={styles.menuGroupTitle}>{group.group.toUpperCase()}</Text>
+                        <View style={styles.menuCard}>
+                            {group.items.map((item, i, arr) => (
+                                <View key={item.label}>
+                                    <TouchableOpacity style={styles.menuItem} onPress={() => item.onPress(router)}>
+                                        <View style={styles.menuIconWrap}>
+                                            <Ionicons name={item.icon} size={18} color="#6B7280" />
+                                        </View>
+                                        <Text style={styles.menuItemText}>{item.label}</Text>
+                                        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+                                    </TouchableOpacity>
+                                    {i < arr.length - 1 && <View style={styles.divider} />}
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                ))}
+
+                {/* Sign Out */}
+                <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout}>
+                    <Ionicons name="log-out-outline" size={18} color="#EF4444" />
+                    <Text style={styles.signOutText}>Sign Out</Text>
+                </TouchableOpacity>
+
+                <View style={{ height: 40 }} />
+            </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFFFFF' },
-    scrollContent: { paddingBottom: 100 },
+    container: { flex: 1, backgroundColor: '#F9FAFB' },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        backgroundColor: '#FFFFFF', paddingTop: 56, paddingBottom: 14, paddingHorizontal: 20,
+        borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
     },
-    backBtn: {},
+    backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontFamily: FontFamily.interBold, color: '#111827' },
-
-    profileSection: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    avatarContainer: {
-        position: 'relative',
-        marginBottom: 12,
-        width: 60,
-        height: 60,
-    },
-    avatarImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-    },
-    editBtn: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: '#1601AA',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: '#FFFFFF',
-    },
-    userName: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#1601AA', marginBottom: 2 },
-    userEmail: { fontSize: 12, fontFamily: FontFamily.lato, color: '#6B7280' },
-
-
-    statsRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 12,
-        marginBottom: 24,
-        paddingHorizontal: 20,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
-        borderRadius: 16,
-        paddingVertical: 20,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.02,
-        shadowRadius: 10,
-        elevation: 2,
-    },
-    statValue: { fontSize: 18, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 4 },
-    statLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#6B7280' },
-
-    tabContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#F3F4F6',
-        marginHorizontal: 20,
-        borderRadius: 24,
-        padding: 4,
-        marginBottom: 24,
-        height: 48,
-    },
-    tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
-    tabActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
-    tabText: { fontSize: 12, fontFamily: FontFamily.lato, color: '#9CA3AF' },
-    tabTextActive: { fontFamily: FontFamily.interSemiBold, color: '#111827' },
-
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        marginBottom: 16,
-    },
-    sectionTitle: { fontSize: 18, fontFamily: FontFamily.interSemiBold, color: '#1601AA' },
-    gridBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-
-    transList: { paddingHorizontal: 20, gap: 16, paddingBottom: 24 },
-    transCard: { width: 180, backgroundColor: '#F8FAFC', borderRadius: 20, padding: 12, paddingBottom: 16 },
-    transImgPlaceholder: {
-        height: 140, backgroundColor: '#EDE9FE', borderRadius: 16, marginBottom: 12, position: 'relative'
-    },
-    likeBtn: {
-        position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center'
-    },
-    rentBadge: {
-        position: 'absolute', bottom: 10, right: 10, backgroundColor: '#64748B', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8
-    },
-    rentBadgeText: { fontSize: 11, fontFamily: FontFamily.lato, color: '#FFFFFF' },
-    transInfo: { paddingHorizontal: 4 },
-    transName: { fontSize: 14, fontFamily: FontFamily.interBold, color: '#1601AA', marginBottom: 4 },
-    transDateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' },
-    transDate: { fontSize: 10, fontFamily: FontFamily.lato, color: '#64748B' },
-
-    groupTitle: {
-        fontSize: 14, fontFamily: FontFamily.interBold, color: '#9CA3AF', marginLeft: 20, marginBottom: 12, marginTop: 8
-    },
-    settingsGroup: {
-        backgroundColor: '#FFFFFF', marginHorizontal: 20, borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6', paddingVertical: 4, marginBottom: 16
-    },
-    settingItem: {
-        flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14
-    },
-    settingIcon: {
-        width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 16
-    },
-    settingLabel: { flex: 1, fontSize: 15, fontFamily: FontFamily.interSemiBold, color: '#374151' },
-    divider: { height: 1, backgroundColor: '#F3F4F6', marginLeft: 68 },
-
-
-    logoutBtn: {
-        marginHorizontal: 20, backgroundColor: '#FEF2F2', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginTop: 8
-    },
-    logoutText: { fontSize: 16, fontFamily: FontFamily.interBold, color: '#EF4444' },
-
-    bottomTabBar: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        width: '100%',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-        paddingBottom: 22,
-        paddingTop: 8,
-    },
-    bottomTabItem: { flex: 1, alignItems: 'center' },
-    bottomTabText: { fontSize: 10, fontFamily: FontFamily.lato, color: '#9CA3AF', marginTop: 3 },
-    bottomTabActive: { color: '#1601AA', fontFamily: FontFamily.latoSemiBold },
+    avatarSection: { alignItems: 'center', paddingVertical: 28, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+    avatarText: { fontSize: 30, fontFamily: FontFamily.interBold, color: '#1601AA' },
+    userName: { fontSize: 20, fontFamily: FontFamily.interBold, color: '#111827', marginBottom: 4 },
+    userEmail: { fontSize: 14, fontFamily: FontFamily.lato, color: '#6B7280', marginBottom: 10 },
+    roleBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4 },
+    roleBadgeText: { fontSize: 12, fontFamily: FontFamily.interSemiBold, color: '#1601AA' },
+    infoCard: { backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 16, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: '#F3F4F6' },
+    infoRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 },
+    infoIconWrap: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center' },
+    infoLabel: { fontSize: 11, fontFamily: FontFamily.lato, color: '#9CA3AF', marginBottom: 2 },
+    infoValue: { fontSize: 14, fontFamily: FontFamily.interSemiBold, color: '#111827' },
+    divider: { height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
+    menuGroup: { marginHorizontal: 16, marginTop: 20 },
+    menuGroupTitle: { fontSize: 11, fontFamily: FontFamily.interSemiBold, color: '#9CA3AF', marginBottom: 10, letterSpacing: 0.5 },
+    menuCard: { backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#F3F4F6', padding: 4 },
+    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+    menuIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#F9FAFB', alignItems: 'center', justifyContent: 'center' },
+    menuItemText: { flex: 1, fontSize: 15, fontFamily: FontFamily.interSemiBold, color: '#374151' },
+    signOutBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 16, marginTop: 24, backgroundColor: '#FEF2F2', borderRadius: 12, padding: 16 },
+    signOutText: { fontSize: 15, fontFamily: FontFamily.interSemiBold, color: '#EF4444' },
 });
